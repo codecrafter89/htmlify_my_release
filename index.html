@@ -1,11 +1,9 @@
-<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Release HTML Generator</title>
-
+    <meta charset="utf-8" />
+    <title>Release Components HTML Builder</title>
+    <!-- Bootstrap 5 -->
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -13,179 +11,645 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         body {
-            background-color: #f8f9fa;
+            background: #f8f9fa;
         }
 
         .card {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         textarea {
             resize: vertical;
+            white-space: pre-wrap;
+        }
+
+        .debug {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e6e6e6;
+        }
+
+        .small-muted {
+            font-size: 0.9rem;
+            color: #666;
         }
     </style>
 </head>
 
 <body>
-    <div class="container mt-4">
-        <h1 class="text-center mb-4">HTMLify My Release</h1>
+    <div class="container py-4">
+        <h1 class="h4 mb-3">HTMLify My Release</h1>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label">Excel file (.xlsx/.xls)</label>
+                        <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
+                      
+                    </div>
+                    <div class="col-md-3 d-none">
+                        <label class="form-label">Sheet name (optional)</label>
+                        <input type="text" id="sheetName" class="form-control" placeholder="Auto-detect first sheet" />
+                    </div>
 
-        <!-- Release Name -->
-        <div class="card p-3">
-            <label class="form-label">Release Name:</label>
-            <input type="text" id="releaseName" class="form-control" placeholder="Enter Release Name">
+                    <div class="col-md-2 d-none">
+                        <label class="form-label">Solution cell</label>
+                        <input type="text" id="solutionCell" class="form-control" value="B1" />
+                    </div>
+
+                    <div class="col-md-2 d-none">
+                        <label class="form-label">Date format</label>
+                        <input type="text" id="dateFormat" class="form-control" value="DD/MM/YYYY HH:mm" />
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button id="generateBtn" class="btn btn-success w-100">Generate HTML</button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Entity Components -->
-        <div class="card p-3">
-            <h4>Entity Components</h4>
-            <div id="entities"></div>
-            <button class="btn btn-outline-primary mt-2" onclick="addEntity()">+ Add Entity</button>
+        <div class="sticky-actions d-flex gap-2">
+            <button id="copyBtn" class="btn btn-outline-secondary btn-sm">Copy HTML</button>
+            <button id="downloadBtn" class="btn btn-outline-success btn-sm d-none">Download HTML file</button>
+            <span id="status" class="ms-2 text-muted small"></span>
         </div>
-
-        <!-- Cloud Flows -->
-        <div class="card p-3">
-            <h4>Cloud Flows</h4>
-            <textarea id="cloudFlows" class="form-control" rows="4"
-                placeholder="Enter Cloud Flows, one per line"></textarea>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card preview-card">
+                    <div class="card-header">Rendered Preview</div>
+                    <div class="card-body">
+                        <div id="preview"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Generated HTML (raw)</div>
+                    <div class="card-body">
+                        <pre id="output" class="code"></pre>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Canvas Apps -->
-        <div class="card p-3">
-            <h4>Canvas Apps</h4>
-            <textarea id="canvasApps" class="form-control" rows="4"
-                placeholder="Enter Canvas Apps, one per line"></textarea>
-        </div>
-
-        <!-- Plugins -->
-        <div class="card p-3">
-            <h4>Plugins</h4>
-            <div id="plugins"></div>
-            <button class="btn btn-outline-primary mt-2" onclick="addPlugin()">+ Add Plugin</button>
-        </div>
-
-        <!-- Miscellaneous Tasks -->
-        <div class="card p-3">
-            <h4>Miscellaneous Tasks</h4>
-            <textarea id="miscTasks" class="form-control" rows="4"
-                placeholder="Enter Miscellaneous Tasks, one per line"></textarea>
-        </div>
-
-        <button class="btn btn-success w-100 mb-3" onclick="generateHTML()">Generate HTML</button>
-
-        <h4>Output:</h4>
-        <textarea id="outputHTML" class="form-control" rows="12" readonly></textarea>
-        <button class="btn btn-secondary mt-2" onclick="downloadHTML()">Download HTML</button>
     </div>
 
-    <!-- Footer -->
-    <footer class="text-center mt-4 p-3 bg-light border-top">
-        <small>Release HTML Generator © <strong>CodeCrafter.89</strong> — Making releases less painful.</small>
-    </footer>
+    <script>
+        // Read a single cell using A1 address (e.g., B1)
+        function getCell(ws, addr) {
+            const cell = ws[addr];
+            if (!cell) return "";
+            // Prefer raw value; fall back to formatted string if present
+            return String(cell.v ?? cell.w ?? "");
+        }
+    </script>
 
     <script>
-        function addEntity() {
-            const div = document.createElement('div');
-            div.className = 'entity card p-2 mb-2';
-            div.innerHTML = `
-            <input type="text" placeholder="Entity Name" class="form-control mb-2 entityName" />
-            <textarea placeholder="Entity Details" class="form-control entityDetails mb-2" rows="2"></textarea>
-            <textarea placeholder="Paste Attributes (one per line)" class="form-control entityAttributes" rows="4"></textarea>
-        `;
-            document.getElementById('entities').appendChild(div);
+        /* ---------- Utilities ---------- */
+        const ESC = (s) => String(s ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        const norm = (s) => String(s ?? "").trim();
+        const typeKey = (s) => norm(s).toLowerCase();
+        function normalizeType(s) {
+            const t = typeKey(s);
+            const map = {
+                "table": "Table",
+                "column": "Column",
+                "relationship": "Relationship",
+                "main form": "Main form",
+                "mainform": "Main form",
+                "view": "View",
+                "canvas app": "Canvas App",
+                "cloud flow": "Cloud Flow",
+                "custom control": "Custom Control",
+                "model - driven app": "Model - Driven App",
+                "model-driven app": "Model - Driven App",
+                "plugin assembly": "Plugin Assembly",
+                "plugin step": "Plugin Step",
+                "security role": "Security Role",
+                "web resource": "Web Resource",
+                "environment variable definition": "Environment Variable Definition",
+                "email template": "Email Template"
+            };
+            return map[t] || s;
+        }
+        function pad(n) { return String(n).padStart(2, "0"); }
+        function customDateFormat(d, fmt = "DD/MM/YYYY HH:mm") {
+            const DD = pad(d.getDate()), MM = pad(d.getMonth() + 1), YYYY = d.getFullYear();
+            const HH = pad(d.getHours()), mm = pad(d.getMinutes()), ss = pad(d.getSeconds());
+            return fmt.replace("DD", DD).replace("MM", MM).replace("YYYY", YYYY).replace("HH", HH).replace("mm", mm).replace("ss", ss);
+        }
+        function formatDate(v, fmt) {
+            if (!v) return "";
+            try {
+                if (typeof v === "number") {
+                    const dt = XLSX.SSF.parse_date_code(v);
+                    const d = new Date(Date.UTC(dt.y, dt.m - 1, dt.d, dt.H, dt.M, dt.S));
+                    return customDateFormat(d, fmt);
+                }
+                const d = new Date(v);
+                if (!isNaN(d)) return customDateFormat(d, fmt);
+            } catch (e) { }
+            return String(v);
+        }
+        const fuzz = (s) => String(s || "").replace(/^\uFEFF/, "").toLowerCase().replace(/[\s\-_]+/g, " ").trim();
+        const HEADER_ALIASES = {
+            "solution unique name": ["solution unique name", "solutionuniquename", "solution name", "solution"],
+            "related table": ["related table", "related entity", "entity", "table name"],
+            "component type": ["component type", "componenttype", "type", "component"],
+            "display name": ["display name", "displayname", "label", "friendly name"],
+            "name": ["name", "schema name", "logical name", "internal name"],
+            "last modified by": ["last modified by", "modified by"],
+            "last modified on": ["last modified on", "modified on", "last updated on", "updated on"]
+        };
+        function detectHeaderRow(sheet) {
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+            const maxScan = Math.min(10, rows.length);
+            let bestIdx = -1, bestScore = -1;
+            const targets = Object.keys(HEADER_ALIASES);
+            for (let i = 0; i < maxScan; i++) {
+                const row = rows[i] || [];
+                const fz = row.map(fuzz);
+                let score = 0;
+                for (const t of targets) {
+                    const variants = HEADER_ALIASES[t];
+                    if (fz.some(cell => variants.includes(cell))) score++;
+                }
+                if (score > bestScore) { bestScore = score; bestIdx = i; }
+            }
+            return { headerRowIndex: bestIdx, rows };
+        }
+        function buildHeaderMap(headerRowValues) {
+            const map = {};
+            const fz = headerRowValues.map(fuzz);
+            for (let idx = 0; idx < fz.length; idx++) {
+                const cell = fz[idx];
+                for (const canonical of Object.keys(HEADER_ALIASES)) {
+                    if (HEADER_ALIASES[canonical].includes(cell)) map[canonical] = idx;
+                }
+            }
+            return map;
+        }
+        function pick(arr, idx) {
+            if (idx == null || idx < 0 || idx >= arr.length) return "";
+            const v = arr[idx];
+            return v == null ? "" : String(v);
+        }
+        function parseRows(sheet, dateFormat) {
+            const { headerRowIndex, rows } = detectHeaderRow(sheet);
+            if (headerRowIndex < 0) throw new Error("Could not detect header row. Please ensure the sheet has headers.");
+            const headerRow = rows[headerRowIndex];
+            const headerMap = buildHeaderMap(headerRow);
+            const idxOf = (name) => headerMap[name];
+            const dataRows = rows.slice(headerRowIndex + 1);
+            const normalized = dataRows
+                .filter(r => r && r.some(cell => String(cell || "").trim() !== ""))
+                .map(r => ({
+                    solutionUniqueName: norm(pick(r, idxOf("solution unique name"))),
+                    relatedTable: norm(pick(r, idxOf("related table"))),
+                    componentTypeRaw: norm(pick(r, idxOf("component type"))),
+                    componentType: normalizeType(pick(r, idxOf("component type"))),
+                    displayName: norm(pick(r, idxOf("display name"))),
+                    name: norm(pick(r, idxOf("name"))),
+                    lastModifiedBy: norm(pick(r, idxOf("last modified by"))),
+                    lastModifiedOn: formatDate(pick(r, idxOf("last modified on")), dateFormat)
+                }));
+            return normalized;
         }
 
-        function addPlugin() {
-            const div = document.createElement('div');
-            div.className = 'plugin card p-2 mb-2';
-            div.innerHTML = `
-            <input type="text" placeholder="Plugin Name" class="form-control mb-2 pluginName" />
-            <textarea placeholder="Paste Steps (one per line)" class="form-control pluginSteps" rows="4"></textarea>
-        `;
-            document.getElementById('plugins').appendChild(div);
-        }
+        /* ---------- HTML builder (no table semantics; follows your structure) ---------- */
 
-        function generateHTML() {
-            const releaseName = document.getElementById('releaseName').value.trim();
-            let html = `<html>\n<head>\n<title>${releaseName}</title>\n</head>\n<body style="overflow-wrap: break-word;">\n`;
-            html += `<p><strong>${releaseName} Components</strong></p>\n`;
+        function buildHTML(rows, options) {
+            const { dateFormat = "DD/MM/YYYY HH:mm", solutionFromCell = "" } = options || {};
 
-            // Entity Components
-            html += `<!-- ENTITY COMPONENTS -->\n<span style="font-size:14px;"><b>Entity Components:</b></span>\n<ul>\n`;
-            document.querySelectorAll('.entity').forEach(entity => {
-                const name = entity.querySelector('.entityName').value.trim();
-                const details = entity.querySelector('.entityDetails').value.trim();
-                html += `  <li><b>${name}</b>: ${details}</li>\n`;
+            // Normalize rows
+            const R = rows.map(r => ({
+                solutionUniqueName: (r.solutionUniqueName || "").trim(),
+                relatedTable: (r.relatedTable || "").trim(),
+                componentTypeRaw: (r.componentTypeRaw || "").trim(),
+                componentType: normalizeType(r.componentType || r.componentTypeRaw),
+                displayName: (r.displayName || "").trim(),
+                name: (r.name || "").trim(),
+                lastModifiedBy: (r.lastModifiedBy || "").trim(),
+                lastModifiedOn: (r.lastModifiedOn || "").trim(),
+            }));
 
-                const attributesText = entity.querySelector('.entityAttributes').value.trim();
-                if (attributesText) {
-                    html += `  <ul>\n    <li><b>Attributes:</b></li>\n    <ul>\n`;
-                    attributesText.split('\n').forEach(attr => {
-                        if (attr.trim()) html += `      <li>${attr.trim()}</li>\n`;
-                    });
-                    html += `    </ul>\n  </ul>\n`;
+            // Resolve header title: prefer cell value (e.g., B1), fall back to first non-empty “Solution Unique Name”
+            const solutionTitle =
+                (solutionFromCell && solutionFromCell.trim()) ||
+                (R.find(x => x.solutionUniqueName)?.solutionUniqueName) ||
+                "Solution";
+
+            const label = (row) => (row.displayName || row.name || "").trim();
+            const bucket = (t) => R.filter(r => r.componentType === t);
+
+            // --- Entity hierarchy: only Table and Column under each “Related Table” ---
+            const tableLike = R.filter(r =>
+                r.relatedTable && (r.componentType === "Table" || r.componentType === "Column")
+            );
+            const entities = Array.from(new Set(tableLike.map(r => r.relatedTable)));
+
+            // Other component buckets (listed as separate sections)
+            const canvasApps = bucket("Canvas App");
+            const cloudFlows = bucket("Cloud Flow");
+            const customControls = bucket("Custom Control");
+            const modelDrivenApps = bucket("Model - Driven App");
+            const pluginAssemblies = bucket("Plugin Assembly");
+            const pluginSteps = bucket("Plugin Step");
+            const securityRoles = bucket("Security Role");
+            const webResources = bucket("Web Resource");
+            const envVarDefs = bucket("Environment Variable Definition");
+            const emailTemplates = bucket("Email Template");
+
+            // Link Plugin Steps to Assemblies heuristically (name containment)
+            const stepsByAssembly = new Map();
+            for (const asm of pluginAssemblies) {
+                const key = (asm.name || asm.displayName || "").toLowerCase();
+                stepsByAssembly.set(key, []);
+            }
+            const unlinkedSteps = [];
+            for (const step of pluginSteps) {
+                const sname = (step.name || step.displayName || "").toLowerCase();
+                let linked = false;
+                for (const [k, arr] of stepsByAssembly.entries()) {
+                    if (k && sname.includes(k)) { arr.push(step); linked = true; break; }
                 }
-            });
-            html += `</ul>\n`;
+                if (!linked) unlinkedSteps.push(step);
+            }
 
-            // Cloud Flows
-            html += `<!-- CLOUD FLOWS -->\n<span style="font-size:14px;"><b>Cloud Flows:</b></span>\n<ul>\n`;
-            document.getElementById('cloudFlows').value.split('\n').forEach(flow => {
-                if (flow.trim()) html += `  <li><b>${flow.trim()}</b></li>\n`;
-            });
-            html += `</ul>\n`;
+            let html = `<html>\n<head>\n<title>${ESC(solutionTitle)}</title>\n</head>\n<body style="overflow-wrap: break-word;">\n`;
+            html += `<p><strong>${ESC(solutionTitle)}</strong></p>\n`;
+            html += `<p><strong>Release Components</strong></p>\n`;
+            html += `<ul>\n`;
 
-            // Canvas Apps
-            html += `<!-- CANVAS APPS -->\n<span style="font-size:14px;"><b>Canvas Apps:</b></span>\n<ul>\n`;
-            document.getElementById('canvasApps').value.split('\n').forEach(app => {
-                if (app.trim()) html += `  <li><b>${app.trim()}</b></li>\n`;
-            });
-            html += `</ul>\n`;
+            // --- Entity Component -> Table(s) -> Column(s) ---
+            for (const entity of entities) {
+                const entityRows = tableLike.filter(r => r.relatedTable === entity);
+                const tables = entityRows.filter(r => r.componentType === "Table");
+                const columns = entityRows.filter(r => r.componentType === "Column");
 
-            // Plugins
-            html += `<!-- PLUGINS -->\n<span style="font-size:14px;"><b>Plugins:</b></span>\n<ul>\n`;
-            document.querySelectorAll('.plugin').forEach(plugin => {
-                const name = plugin.querySelector('.pluginName').value.trim();
-                html += `  <li><b>${name}</b></li>\n`;
+                html += `  <li><strong>Entity Component</strong>\n`;
+                html += `    <ul>\n`;
 
-                const stepsText = plugin.querySelector('.pluginSteps').value.trim();
-                if (stepsText) {
-                    html += `  <ul>\n`;
-                    stepsText.split('\n').forEach(step => {
-                        if (step.trim()) html += `    <li>${step.trim()}</li>\n`;
-                    });
-                    html += `  </ul>\n`;
+                if (tables.length) {
+                    // If there are multiple table rows for the same entity, list each
+                    for (const t of tables) {
+                        html += `      <li><strong>Table - ${ESC(label(t) || entity)}</strong>\n`;
+                        // Columns under this entity
+                        if (columns.length) {
+                            html += `        <ul>\n`;
+                            for (const c of columns) {
+                                html += `          <li>${ESC(label(c))}</li>\n`;
+                            }
+                            html += `        </ul>\n`;
+                        }
+                        html += `      </li>\n`;
+                    }
+                } else {
+                    // No explicit table row—still show a table wrapper using the entity name
+                    html += `      <li><strong>Table - ${ESC(entity)}</strong>\n`;
+                    if (columns.length) {
+                        html += `        <ul>\n`;
+                        for (const c of columns) {
+                            html += `          <li>${ESC(label(c))}</li>\n`;
+                        }
+                        html += `        </ul>\n`;
+                    }
+                    html += `      </li>\n`;
                 }
-            });
-            html += `</ul>\n`;
 
-            // Miscellaneous Tasks
-            html += `<!-- MISC TASKS -->\n<span style="font-size:14px;"><b>Miscellaneous Tasks:</b></span>\n<ul>\n`;
-            document.getElementById('miscTasks').value.split('\n').forEach(task => {
-                if (task.trim()) html += `  <li>${task.trim()}</li>\n`;
-            });
-            html += `</ul>\n`;
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
 
+            // --- Independent sections (not nested under Entity) ---
+            if (cloudFlows.length) {
+                html += `  <li><strong>Cloud Flow</strong>\n    <ul>\n`;
+                for (const f of cloudFlows) html += `      <li>${ESC(label(f))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (canvasApps.length) {
+                html += `  <li><strong>Canvas App</strong>\n    <ul>\n`;
+                for (const c of canvasApps) html += `      <li>${ESC(label(c))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (customControls.length) {
+                html += `  <li><strong>Custom Control</strong>\n    <ul>\n`;
+                for (const c of customControls) html += `      <li>${ESC(label(c))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (modelDrivenApps.length) {
+                html += `  <li><strong>Model - Driven App</strong>\n    <ul>\n`;
+                for (const m of modelDrivenApps) html += `      <li>${ESC(label(m))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+
+            for (const asm of pluginAssemblies) {
+                const key = (asm.name || asm.displayName || "").toLowerCase();
+                const steps = stepsByAssembly.get(key) || [];
+                html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>\n    <ul>\n`;
+                if (steps.length) {
+                    for (const s of steps) {
+                        const stepLabel = (s.displayName || s.name || "").trim();
+                        html += `      <li>Plugin Step - ${ESC(stepLabel || "Unnamed Step")}</li>\n`;
+                    }
+                } else {
+                    html += `      <li class="text-muted">No linked Plugin Steps found</li>\n`;
+                }
+                html += `    </ul>\n  </li>\n`
+
+            }
+            if (unlinkedSteps.length) {
+                html += `  <li><strong>Plugin Step (unlinked)</strong>\n    <ul>\n`;
+                for (const s of unlinkedSteps) html += `      <li>${ESC(label(s))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (securityRoles.length) {
+                html += `  <li><strong>Security Role</strong>\n    <ul>\n`;
+                for (const s of securityRoles) html += `      <li>${ESC(label(s))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (webResources.length) {
+                html += `  <li><strong>Web Resource</strong>\n    <ul>\n`;
+                for (const w of webResources) html += `      <li>${ESC(label(w))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (envVarDefs.length) {
+                html += `  <li><strong>Environment Variable Definition</strong>\n    <ul>\n`;
+                for (const e of envVarDefs) html += `      <li>${ESC(label(e))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            if (emailTemplates.length) {
+                html += `  <li><strong>Email Template</strong>\n    <ul>\n`;
+                for (const et of emailTemplates) html += `      <li>${ESC(label(et))}</li>\n`;
+                html += `    </ul>\n  </li>\n`;
+            }
+
+            html += `</ul>\n<p>&nbsp;</p>\n`;
             html += `</body>\n</html>`;
-            document.getElementById('outputHTML').value = html;
+            return html;
         }
 
-        function downloadHTML() {
-            const content = document.getElementById('outputHTML').value;
-            const releaseName = document.getElementById('releaseName').value.trim();
-            // Fallback if release name is empty
-            const fileName = releaseName ? `${releaseName.replace(/\s+/g, '_')}.html` : 'release.html';
+        // function buildHTML(rows, options) {
+        //     const { dateFormat = "DD/MM/YYYY HH:mm" } = options || {};
+        //     const R = rows.map(r => ({
+        //         solutionUniqueName: norm(r.solutionUniqueName),
+        //         relatedTable: norm(r.relatedTable),
+        //         componentTypeRaw: norm(r.componentTypeRaw),
+        //         componentType: normalizeType(r.componentType || r.componentTypeRaw),
+        //         displayName: norm(r.displayName),
+        //         name: norm(r.name),
+        //         lastModifiedBy: norm(r.lastModifiedBy),
+        //         lastModifiedOn: norm(r.lastModifiedOn),
+        //     }));
+        //     const label = (row) => (row.displayName || row.name || "").trim();
+        //     const solutionUniqueName = R.find(x => x.solutionUniqueName)?.solutionUniqueName || "Solution";
 
-            const blob = new Blob([content], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
+        //     // Buckets
+        //     const bucket = (t) => R.filter(r => r.componentType === t);
+        //     const tableLikeTypes = ["Table", "Column", "Relationship", "Main form", "View"];
+        //     const rowsWithRT = R.filter(r => r.relatedTable && tableLikeTypes.includes(r.componentType));
+        //     const byRT = new Map();
+        //     for (const row of rowsWithRT) {
+        //         const key = row.relatedTable;
+        //         if (!byRT.has(key)) byRT.set(key, []);
+        //         byRT.get(key).push(row);
+        //     }
+
+        //     const canvasApps = bucket("Canvas App");
+        //     const cloudFlows = bucket("Cloud Flow");
+        //     const customControls = bucket("Custom Control");
+        //     const modelDrivenApps = bucket("Model - Driven App");
+        //     const pluginAssemblies = bucket("Plugin Assembly");
+        //     const pluginSteps = bucket("Plugin Step");
+        //     const securityRoles = bucket("Security Role");
+        //     const webResources = bucket("Web Resource");
+        //     const envVarDefs = bucket("Environment Variable Definition");
+        //     const emailTemplates = bucket("Email Template");
+
+        //     // Link plugin steps to assemblies heuristically
+        //     const stepMap = new Map();
+        //     for (const asm of pluginAssemblies) {
+        //         const key = (asm.name || asm.displayName || "").toLowerCase();
+        //         stepMap.set(key, []);
+        //     }
+        //     const unlinkedSteps = [];
+        //     for (const s of pluginSteps) {
+        //         const sname = (s.name || s.displayName || "").toLowerCase();
+        //         let linked = false;
+        //         for (const [k, arr] of stepMap.entries()) {
+        //             if (k && sname.includes(k)) { arr.push(s); linked = true; break; }
+        //         }
+        //         if (!linked) unlinkedSteps.push(s);
+        //     }
+
+        //     let html = "";
+        //     html += `<p><strong>${ESC(solutionUniqueName)}</strong></p>\n`;
+        //     html += `<p><strong>Release Components</strong></p>\n`;
+        //     html += `<ul>\n`;
+
+        //     // Related Table wrapper blocks
+        //     for (const [rt, list] of byRT.entries()) {
+        //         html += `  <li><strong>${ESC(rt)}</strong>\n`;
+        //         html += `    <ul>\n`;
+        //         const tables = list.filter(x => x.componentType === "Table");
+        //         const columns = list.filter(x => x.componentType === "Column");
+        //         for (const t of tables) {
+        //             html += `      <li>Table - ${ESC(label(t))}\n`;
+        //             if (columns.length) {
+        //                 html += `        <ul>\n`;
+        //                 for (const c of columns) html += `          <li>Column - ${ESC(label(c))}</li>\n`;
+        //                 html += `        </ul>\n`;
+        //             }
+        //             html += `      </li>\n`;
+        //         }
+        //         if (!tables.length && columns.length) {
+        //             html += `      <li>Table</li>\n`;
+        //             html += `      <ul>\n`;
+        //             for (const c of columns) html += `        <li>Column - ${ESC(label(c))}</li>\n`;
+        //             html += `      </ul>\n`;
+        //         }
+        //         const rels = list.filter(x => x.componentType === "Relationship");
+        //         if (rels.length) {
+        //             html += `      <li>Relationship\n        <ul>\n`;
+        //             for (const r of rels) html += `          <li>${ESC(label(r))}</li>\n`;
+        //             html += `        </ul>\n      </li>\n`;
+        //         }
+        //         const mfs = list.filter(x => x.componentType === "Main form");
+        //         if (mfs.length) {
+        //             html += `      <li>Main form\n        <ul>\n`;
+        //             for (const mf of mfs) html += `          <li>${ESC(label(mf))}</li>\n`;
+        //             html += `        </ul>\n      </li>\n`;
+        //         }
+        //         const views = list.filter(x => x.componentType === "View");
+        //         if (views.length) {
+        //             html += `      <li>View\n        <ul>\n`;
+        //             for (const v of views) html += `          <li>${ESC(label(v))}</li>\n`;
+        //             html += `        </ul>\n      </li>\n`;
+        //         }
+        //         html += `    </ul>\n`;
+        //         html += `  </li>\n`;
+        //     }
+
+        //     // Canvas App
+        //     if (canvasApps.length) {
+        //         html += `  <li><strong>Canvas App</strong>\n    <ul>\n`;
+        //         for (const c of canvasApps) html += `      <li>${ESC(label(c))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Cloud Flow
+        //     if (cloudFlows.length) {
+        //         html += `  <li><strong>Cloud Flow</strong>\n    <ul>\n`;
+        //         for (const f of cloudFlows) html += `      <li>${ESC(label(f))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Custom Control
+        //     if (customControls.length) {
+        //         html += `  <li><strong>Custom Control</strong>\n    <ul>\n`;
+        //         for (const c of customControls) html += `      <li>${ESC(label(c))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Model-Driven App
+        //     if (modelDrivenApps.length) {
+        //         html += `  <li><strong>Model - Driven App</strong>\n    <ul>\n`;
+        //         for (const m of modelDrivenApps) html += `      <li>${ESC(label(m))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Plugin Assembly (+ steps)
+        //     for (const asm of pluginAssemblies) {
+        //         const key = (asm.name || asm.displayName || "").toLowerCase();
+        //         const steps = stepMap.get(key) || [];
+        //         html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>\n    <ul>\n`;
+        //         if (steps.length) { for (const s of steps) html += `      <li>Plugin Step</li>\n`; }
+        //         else html += `      <li class="text-muted">No linked Plugin Steps found</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Unlinked steps (optional)
+        //     if (unlinkedSteps.length) {
+        //         html += `  <li><strong>Plugin Step (unlinked)</strong>\n    <ul>\n`;
+        //         for (const s of unlinkedSteps) html += `      <li>${ESC(label(s))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Security Role
+        //     if (securityRoles.length) {
+        //         html += `  <li><strong>Security Role</strong>\n    <ul>\n`;
+        //         for (const s of securityRoles) html += `      <li>${ESC(label(s))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Web Resource
+        //     if (webResources.length) {
+        //         html += `  <li><strong>Web Resource</strong>\n    <ul>\n`;
+        //         for (const w of webResources) html += `      <li>${ESC(label(w))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Environment Variable Definition
+        //     if (envVarDefs.length) {
+        //         html += `  <li><strong>Environment Variable Definition</strong>\n    <ul>\n`;
+        //         for (const e of envVarDefs) html += `      <li>${ESC(label(e))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+        //     // Email Template (optional)
+        //     if (emailTemplates.length) {
+        //         html += `  <li><strong>Email Template</strong>\n    <ul>\n`;
+        //         for (const et of emailTemplates) html += `      <li>${ESC(label(et))}</li>\n`;
+        //         html += `    </ul>\n  </li>\n`;
+        //     }
+
+        //     html += `</ul>\n<p>&nbsp;</p>\n`;
+        //     return html;
+        // }
+
+        /* ---------- Wire up UI after DOM is ready ---------- */
+        document.addEventListener("DOMContentLoaded", () => {
+            const fileInput = document.getElementById("fileInput");
+            const sheetNameInput = document.getElementById("sheetName");
+            const dateFormatInput = document.getElementById("dateFormat");
+            const output = document.getElementById("output");
+            const preview = document.getElementById("preview");
+            const statusEl = document.getElementById("status");
+
+            const ensureXLSX = () => !!window.XLSX;
+
+
+            document.getElementById("generateBtn").addEventListener("click", async () => {
+                const statusEl = document.getElementById("status");
+                const file = document.getElementById("fileInput").files?.[0];
+                const sheetNameInput = document.getElementById("sheetName");
+                const dateFormatInput = document.getElementById("dateFormat");
+                const solutionCellInput = document.getElementById("solutionCell");
+                const output = document.getElementById("output");
+                const preview = document.getElementById("preview");
+
+                if (!file) { statusEl.textContent = "Please select an Excel file."; return; }
+                if (!window.XLSX) { statusEl.textContent = "SheetJS not loaded. Check CDN/network."; return; }
+
+                statusEl.textContent = "Parsing Excel…";
+                try {
+                    const data = await file.arrayBuffer();
+                    const wb = XLSX.read(data, { type: "array" });
+
+                    const sheetName = sheetNameInput.value || wb.SheetNames[0];
+                    const ws = wb.Sheets[sheetName];
+                    if (!ws) throw new Error(`Sheet '${sheetName}' not found.`);
+
+                    // Robust row parsing (you already have parseRows)
+                    const rows = parseRows(ws, dateFormatInput.value);
+
+                    // NEW: get solution name from the specified cell (defaults to B1)
+                    const solutionCellAddr = (solutionCellInput.value || "B1").trim();
+                    const solutionFromCell = getCell(ws, solutionCellAddr);
+
+                    const html = buildHTML(rows, {
+                        dateFormat: dateFormatInput.value,
+                        solutionFromCell
+                    });
+
+                    output.textContent = html;
+                    preview.innerHTML = html;
+                    statusEl.textContent = `Generated from sheet '${sheetName}' with ${rows.length} row(s).`;
+                } catch (e) {
+                    console.error(e);
+                    statusEl.textContent = `Error: ${e.message}`;
+                }
+            });
+
+
+            document.getElementById("copyBtn").addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(output.textContent || "");
+                    statusEl.textContent = "HTML copied to clipboard.";
+                } catch (e) {
+                    statusEl.textContent = "Clipboard copy failed.";
+                }
+            });
+
+            document.getElementById("downloadBtn").addEventListener("click", () => {
+                const text = output.textContent || "";
+                const blob = new Blob([text], { type: "text/html;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = solutionFromCell + ".html";
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(a.href);
+                a.remove();
+                statusEl.textContent = solutionFromCell + ".html";
+            });
+        });
     </script>
 </body>
 
