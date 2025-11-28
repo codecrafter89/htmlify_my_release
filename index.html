@@ -121,27 +121,32 @@
         const norm = (s) => String(s ?? "").trim();
         const typeKey = (s) => norm(s).toLowerCase();
         function normalizeType(s) {
-            const t = typeKey(s);
-            const map = {
-                "table": "Table",
-                "column": "Column",
-                "relationship": "Relationship",
-                "main form": "Main form",
-                "mainform": "Main form",
-                "view": "View",
-                "canvas app": "Canvas App",
-                "cloud flow": "Cloud Flow",
-                "custom control": "Custom Control",
-                "model - driven app": "Model - Driven App",
-                "model-driven app": "Model - Driven App",
-                "plugin assembly": "Plugin Assembly",
-                "plugin step": "Plugin Step",
-                "security role": "Security Role",
-                "web resource": "Web Resource",
-                "environment variable definition": "Environment Variable Definition",
-                "email template": "Email Template"
-            };
-            return map[t] || s;
+            const t = String(s || "").trim().toLowerCase();
+
+            // Patterns: if any predicate returns true, we normalize to the canonical name
+            const patterns = [
+                { name: "Table", test: v => v === "table" },
+                { name: "Column", test: v => v === "column" },
+                { name: "Relationship", test: v => v === "relationship" },
+                { name: "Main form", test: v => v === "main form" || v === "mainform" },
+                { name: "View", test: v => v === "view" },
+                { name: "Canvas App", test: v => v === "canvas app" },
+                { name: "Cloud Flow", test: v => v === "cloud flow" },
+                { name: "Custom Control", test: v => v === "custom control" },
+                { name: "Model - Driven App", test: v => v === "model - driven app" || v === "model-driven app" },
+                { name: "Plugin Assembly", test: v => v === "plugin assembly" },
+                { name: "Plugin Step", test: v => v === "plugin step" },
+                { name: "Security Role", test: v => v === "security role" },
+
+                // 🔹 Flexible match for Web Resource with suffixes like "(JScript)" or "(HTML)"
+                { name: "Web Resource", test: v => v.startsWith("web resource") },
+
+                { name: "Environment Variable Definition", test: v => v === "environment variable definition" },
+                { name: "Email Template", test: v => v === "email template" },
+            ];
+
+            const hit = patterns.find(p => p.test(t));
+            return hit ? hit.name : s;
         }
         function pad(n) { return String(n).padStart(2, "0"); }
         function customDateFormat(d, fmt = "DD/MM/YYYY HH:mm") {
