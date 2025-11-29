@@ -7,101 +7,128 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-        body {
-            background: #f8f9fa;
-        }
-
         .card {
-            margin-bottom: 18px;
+            border-radius: 0.5rem !important;
         }
 
-        textarea {
-            resize: vertical;
-            white-space: pre-wrap;
+        .navbar-brand i {
+            transform: translateY(-1px);
         }
 
-        .debug {
-            font-family: monospace;
-            white-space: pre-wrap;
-            background: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #e6e6e6;
+        #preview,
+        #output {
+            font-family: "Inter", "Segoe UI", sans-serif;
         }
 
-        .small-muted {
-            font-size: 0.9rem;
-            color: #666;
+        pre.code {
+            font-family: "Fira Code", monospace;
         }
     </style>
 </head>
 
 <body>
-    <div class="container py-4">
-        <h1 class="h4 mb-3">HTMLify My Release</h1>
-        <div class="card mb-3">
-            <div class="card-body">
+    <div class="container pt-3">
+<!--  -->
+        <!-- Slim Navbar Title -->
+         <nav class="navbar navbar-light bg-white border rounded shadow-sm mb-3 py-2 px-3"> <b>
+                <span class="navbar-brand mb-0 fs-5 fw-semibold text-success d-flex align-items-center">
+                    <i class="bi bi-code-slash"></i> &nbsp; HTMLify My Release
+                </span></b>
+        </nav>
+
+        <!-- Upload Section -->
+        <div class="card border-0 shadow-sm rounded-3 mb-3">
+            <div class="card-body py-3">
                 <div class="row g-3 align-items-end">
+
                     <div class="col-md-5">
-                        <label class="form-label">Excel file (.xlsx/.xls)</label>
-                        <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
-                      
+                        <label class="form-label">Excel File (.xlsx / .xls)</label>
+                        <input type="file" id="fileInput" class="form-control form-control-sm" accept=".xlsx,.xls" />
                     </div>
+                    <!-- keep these hidden so older JS still works -->
                     <div class="col-md-3 d-none">
                         <label class="form-label">Sheet name (optional)</label>
-                        <input type="text" id="sheetName" class="form-control" placeholder="Auto-detect first sheet" />
+                        <input type="text" id="sheetName" class="form-control form-control-sm"
+                            placeholder="Auto-detect first sheet" />
                     </div>
 
                     <div class="col-md-2 d-none">
                         <label class="form-label">Solution cell</label>
-                        <input type="text" id="solutionCell" class="form-control" value="B1" />
+                        <input type="text" id="solutionCell" class="form-control form-control-sm" value="B1" />
                     </div>
 
                     <div class="col-md-2 d-none">
                         <label class="form-label">Date format</label>
-                        <input type="text" id="dateFormat" class="form-control" value="DD/MM/YYYY HH:mm" />
+                        <input type="text" id="dateFormat" class="form-control form-control-sm"
+                            value="DD/MM/YYYY HH:mm" />
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+                        <button id="generateBtn" class="btn btn-success btn-sm">
+                            Generate &nbsp;<i class="bi bi-filetype-html"></i>
+                        </button>
                     </div>
                     <div class="col-md-2 d-grid">
-                        <button id="generateBtn" class="btn btn-success w-100">Generate HTML</button>
+                        <button id="copyBtn" class="btn btn-outline-secondary btn-sm px-3">
+                            Copy &nbsp; <i class="bi bi-copy"></i>
+                        </button>
+                    </div>
+                    <div class="col-md-3 d-grid">
+                        <span id="status" class="ms-3 small text-muted align-self-center"></span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="sticky-actions d-flex gap-2">
-            <button id="copyBtn" class="btn btn-outline-secondary btn-sm">Copy HTML</button>
-            <button id="downloadBtn" class="btn btn-outline-success btn-sm  d-none">Download HTML file</button>
-            <span id="status" class="ms-2 text-muted small"></span>
+
+        <!-- Sticky Actions -->
+        <div class="sticky-actions position-sticky top-0 bg-white py-2 d-flex gap-2  d-none">
+
+            <button id="downloadBtn" class="btn btn-outline-success btn-sm rounded-pill px-3 d-none">
+                <i class="bi bi-download"></i> Download
+            </button>
+
         </div>
-    </br>
-        <div class="row g-3">
+
+        <!-- Output Panels -->
+        <div class="row g-3 mt-2">
             <div class="col-md-6">
-                <div class="card preview-card">
-                    <div class="card-header">Rendered Preview</div>
-                    <div class="card-body">
-                        <div id="preview"></div>
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                    <div class="card-header bg-success text-white py-2 fw-semibold">
+                        <i class="bi bi-layout-text-sidebar-reverse"></i> &nbsp; Rendered Preview
+                    </div>
+                    <div class="card-body py-3">
+                        <div id="preview" class="p-2 border rounded bg-light" style="min-height: 240px;"></div>
                     </div>
                 </div>
             </div>
+
             <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">Generated HTML (raw)</div>
-                    <div class="card-body">
-                        <pre id="output" class="code"></pre>
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                    <div class="card-header bg-secondary text-white py-2 fw-semibold">
+                        <i class="bi bi-terminal"></i> &nbsp; Generated HTML (Raw)
+                    </div>
+                    <div class="card-body py-3 bg-light">
+                        <pre id="output" class="code border rounded p-2 bg-white small"
+                            style="max-height: 450px; overflow:auto;"></pre>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
-    <!-- Footer -->
-    <footer class="text-center mt-4 p-3 bg-light border-top">
-        <small>Release HTML Generator © <strong>CodeCrafter.89</strong> — Making releases less painful.</small>
+
+    <footer class="text-center mt-4 py-2 bg-light border-top small text-muted">
+       Release HTML Generator <i class="bi bi-c-circle"></i> <strong>CodeCrafter.89</strong> — Making releases less painful.
     </footer>
+
+
     <script>
         // Read a single cell using A1 address (e.g., B1)
         function getCell(ws, addr) {
