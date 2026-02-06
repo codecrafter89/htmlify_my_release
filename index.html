@@ -1,10 +1,10 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
-    <title>HTMLify My Release - By CodeCrafter89</title>
+    <title>HTMLify My Release Enhanced - By CodeCrafter89</title>
     <!-- Bootstrap 5 -->
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -30,93 +30,250 @@
         pre.code {
             font-family: "Fira Code", monospace;
         }
+
+        .editable-grid {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .editable-grid table {
+            font-size: 0.875rem;
+        }
+
+        .editable-grid input,
+        .editable-grid select,
+        .editable-grid textarea {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .editable-grid th {
+            position: sticky;
+            top: 0;
+            background-color: #198754;
+            color: white;
+            z-index: 10;
+        }
+
+        .step-section {
+            display: none;
+        }
+
+        .step-section.active {
+            display: block;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .step.active .step-number {
+            background-color: #198754;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .grid-actions {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 5;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid #dee2e6;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 
 <body>
     <div class="container pt-3">
-<!--  -->
-        <!-- Slim Navbar Title -->
-         <nav class="navbar navbar-light bg-white border rounded shadow-sm mb-3 py-2 px-3"> <b>
+        <!-- Navbar Title -->
+        <nav class="navbar navbar-light bg-white border rounded shadow-sm mb-3 py-2 px-3">
+            <b>
                 <span class="navbar-brand mb-0 fs-5 fw-semibold text-success d-flex align-items-center">
-                    <i class="bi bi-code-slash"></i> &nbsp; HTMLify My Release
-                </span></b>
+                    <i class="bi bi-code-slash"></i> &nbsp; HTMLify My Release Enhanced
+                </span>
+            </b>
+            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#helpModal">
+                <i class="bi bi-question-circle"></i> Help
+            </button>
         </nav>
 
-        <!-- Upload Section -->
-        <div class="card border-0 shadow-sm rounded-3 mb-3">
-            <div class="card-body py-3">
-                <div class="row g-3 align-items-end">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1-indicator">
+                <div class="step-number">1</div>
+                <span>Upload File</span>
+            </div>
+            <div class="step" id="step2-indicator">
+                <div class="step-number">2</div>
+                <span>Edit Components</span>
+            </div>
+            <div class="step" id="step3-indicator">
+                <div class="step-number">3</div>
+                <span>Generate Output</span>
+            </div>
+        </div>
 
-                    <div class="col-md-5">
-                        <label class="form-label">Excel File (.xlsx / .xls)</label>
-                        <input type="file" id="fileInput" class="form-control form-control-sm" accept=".xlsx,.xls" />
+        <!-- Step 1: Upload Section -->
+        <div id="step1" class="step-section active">
+            <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body py-3">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-upload"></i> Upload Excel File
+                    </h5>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label">Excel File (.xlsx / .xls)</label>
+                            <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Solution Cell (optional)</label>
+                            <input type="text" id="solutionCell" class="form-control" value="B1"
+                                placeholder="e.g., B1" />
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button id="loadBtn" class="btn btn-success">
+                                Load File &nbsp;<i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
-                    <!-- keep these hidden so older JS still works -->
-                    <div class="col-md-3 d-none">
-                        <label class="form-label">Sheet name (optional)</label>
-                        <input type="text" id="sheetName" class="form-control form-control-sm"
-                            placeholder="Auto-detect first sheet" />
-                    </div>
-
-                    <div class="col-md-2 d-none">
-                        <label class="form-label">Solution cell</label>
-                        <input type="text" id="solutionCell" class="form-control form-control-sm" value="B1" />
-                    </div>
-
-                    <div class="col-md-2 d-none">
-                        <label class="form-label">Date format</label>
-                        <input type="text" id="dateFormat" class="form-control form-control-sm"
-                            value="DD/MM/YYYY HH:mm" />
-                    </div>
-
-                    <div class="col-md-2 d-grid">
-                        <button id="generateBtn" class="btn btn-success btn-sm">
-                            Generate &nbsp;<i class="bi bi-filetype-html"></i>
-                        </button>
-                    </div>
-                    <div class="col-md-2 d-grid">
-                        <button id="copyBtn" class="btn btn-outline-secondary btn-sm px-3">
-                            Copy &nbsp; <i class="bi bi-copy"></i>
-                        </button>
-                    </div>
-                    <div class="col-md-3 d-grid">
-                        <span id="status" class="ms-3 small text-muted align-self-center"></span>
+                    <div class="mt-2">
+                        <span id="loadStatus" class="small text-muted"></span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sticky Actions -->
-        <div class="sticky-actions position-sticky top-0 bg-white py-2 d-flex gap-2  d-none">
-
-            <button id="downloadBtn" class="btn btn-outline-success btn-sm rounded-pill px-3 d-none">
-                <i class="bi bi-download"></i> Download
-            </button>
-
+        <!-- Step 2: Edit Grid Section -->
+        <div id="step2" class="step-section">
+            <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body py-3">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-table"></i> Edit Component Details
+                    </h5>
+                    <div class="grid-actions">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button id="addRowBtn" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-plus-circle"></i> Add Row
+                            </button>
+                            <button id="removeSelectedBtn" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Remove Selected
+                            </button>
+                            <div class="ms-auto">
+                                <span id="rowCount" class="small text-muted"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editable-grid">
+                        <table class="table table-bordered table-hover" id="componentGrid">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                    </th>
+                                    <th>Component Type</th>
+                                    <th>Related Table/Entity</th>
+                                    <th>Display Name</th>
+                                    <th>Name</th>
+                                    <th style="width: 150px;">Component Status</th>
+                                    <th style="width: 250px;">Description</th>
+                                    <th>Last Modified By</th>
+                                    <th>Last Modified On</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gridBody">
+                                <!-- Rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <button id="backToUploadBtn" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </button>
+                        <button id="proceedToGenerateBtn" class="btn btn-success ms-auto">
+                            Proceed to Generate <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Output Panels -->
-        <div class="row g-3 mt-2">
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0 rounded-3 h-100">
-                    <div class="card-header bg-success text-white py-2 fw-semibold">
-                        <i class="bi bi-layout-text-sidebar-reverse"></i> &nbsp; Rendered Preview
+        <!-- Step 3: Generate Output Section -->
+        <div id="step3" class="step-section">
+            <div class="card border-0 shadow-sm rounded-3 mb-3">
+                <div class="card-body py-3">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-file-earmark-code"></i> Generate HTML Output
+                    </h5>
+                    <div class="d-flex gap-2 mb-3">
+                        <button id="generateBtn" class="btn btn-success">
+                            <i class="bi bi-filetype-html"></i> Generate HTML
+                        </button>
+                        <button id="copyBtn" class="btn btn-outline-secondary">
+                            <i class="bi bi-copy"></i> Copy HTML
+                        </button>
+                        <button id="downloadBtn" class="btn btn-outline-primary">
+                            <i class="bi bi-download"></i> Download HTML
+                        </button>
+                        <button id="backToEditBtn" class="btn btn-outline-secondary ms-auto">
+                            <i class="bi bi-arrow-left"></i> Back to Edit
+                        </button>
                     </div>
-                    <div class="card-body py-3">
-                        <div id="preview" class="p-2 border rounded bg-light" style="min-height: 240px;"></div>
+                    <div>
+                        <span id="generateStatus" class="small text-muted"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="card shadow-sm border-0 rounded-3 h-100">
-                    <div class="card-header bg-secondary text-white py-2 fw-semibold">
-                        <i class="bi bi-terminal"></i> &nbsp; Generated HTML (Raw)
+            <!-- Output Panels -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-success text-white py-2 fw-semibold">
+                            <i class="bi bi-layout-text-sidebar-reverse"></i> &nbsp; Rendered Preview
+                        </div>
+                        <div class="card-body py-3">
+                            <div id="preview" class="p-2 border rounded bg-light" style="min-height: 400px;"></div>
+                        </div>
                     </div>
-                    <div class="card-body py-3 bg-light">
-                        <pre id="output" class="code border rounded p-2 bg-white small"
-                            style="max-height: 450px; overflow:auto;"></pre>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0 rounded-3 h-100">
+                        <div class="card-header bg-secondary text-white py-2 fw-semibold">
+                            <i class="bi bi-terminal"></i> &nbsp; Generated HTML (Raw)
+                        </div>
+                        <div class="card-body py-3 bg-light">
+                            <pre id="output" class="code border rounded p-2 bg-white small"
+                                style="max-height: 450px; overflow:auto;"></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,64 +281,247 @@
 
     </div>
 
-    <footer class="text-center mt-4 py-2 bg-light border-top small text-muted">
-       Release HTML Generator <i class="bi bi-c-circle"></i> <strong>CodeCrafter.89</strong> — Making releases less painful.
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="helpModalLabel">
+                        <i class="bi bi-info-circle"></i> User Guide & Supported Components
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Guidelines Section -->
+                    <h6 class="text-success fw-bold mb-3">
+                        <i class="bi bi-list-check"></i> How to Use This Tool
+                    </h6>
+                    
+                    <div class="accordion accordion-flush mb-4" id="guidelinesAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1Guide">
+                                    <i class="bi bi-1-circle-fill text-success me-2"></i> Step 1: Upload Excel File
+                                </button>
+                            </h2>
+                            <div id="step1Guide" class="accordion-collapse collapse show" data-bs-parent="#guidelinesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="small">
+                                        <li>Select an Excel file (.xlsx or .xls) containing your component data</li>
+                                        <li>The file should have headers like: <code>Component Type</code>, <code>Display Name</code>, <code>Name</code>, <code>Related Table</code>, etc.</li>
+                                        <li>Optionally specify a cell (e.g., B1) containing your solution name</li>
+                                        <li>The tool will auto-detect the header row and parse your data</li>
+                                        <li>Click <strong>Load File</strong> to proceed</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2Guide">
+                                    <i class="bi bi-2-circle-fill text-success me-2"></i> Step 2: Edit Component Details
+                                </button>
+                            </h2>
+                            <div id="step2Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="small">
+                                        <li><strong>Review</strong> all loaded components in the editable grid</li>
+                                        <li><strong>Component Status:</strong> Select from New, Modified, Existing, or Deprecated</li>
+                                        <li><strong>Description:</strong> Add notes explaining what changed or what the component does</li>
+                                        <li><strong>Add Row:</strong> Manually add components not in your Excel file</li>
+                                        <li><strong>Remove Selected:</strong> Delete unwanted rows by checking the checkbox and clicking remove</li>
+                                        <li>All fields are editable - click to modify any value</li>
+                                        <li>Click <strong>Proceed to Generate</strong> when ready</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3Guide">
+                                    <i class="bi bi-3-circle-fill text-success me-2"></i> Step 3: Generate HTML Output
+                                </button>
+                            </h2>
+                            <div id="step3Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                                <div class="accordion-body">
+                                    <ul class="small">
+                                        <li>Click <strong>Generate HTML</strong> to create your formatted release documentation</li>
+                                        <li>View the <strong>Rendered Preview</strong> to see how it will look</li>
+                                        <li>Review the <strong>Raw HTML</strong> code on the right</li>
+                                        <li><strong>Copy HTML:</strong> Copy the code to your clipboard</li>
+                                        <li><strong>Download HTML:</strong> Save as a standalone HTML file</li>
+                                        <li>Status badges will be color-coded (New=Green, Modified=Yellow, Existing=Blue, Deprecated=Red)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Supported Components Section -->
+                    <h6 class="text-success fw-bold mb-3">
+                        <i class="bi bi-box-seam"></i> Supported Components
+                    </h6>
+                    
+                    <div class="row g-3">
+                        <!-- Dynamics 365 / Dataverse -->
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white py-2">
+                                    <small class="fw-bold"><i class="bi bi-database"></i> Dynamics 365 / Dataverse</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <ul class="small mb-0" style="font-size: 0.8rem;">
+                                        <li>Tables (Entities)</li>
+                                        <li>Columns (Fields/Attributes)</li>
+                                        <li>Relationships</li>
+                                        <li>Forms (Main Forms)</li>
+                                        <li>Views</li>
+                                        <li>Business Process Flows</li>
+                                        <li>Dashboards</li>
+                                        <li>Charts</li>
+                                        <li>Choices (Option Sets)</li>
+                                        <li>Security Roles</li>
+                                        <li>Sitemap</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Power Platform -->
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white py-2">
+                                    <small class="fw-bold"><i class="bi bi-lightning-charge"></i> Power Platform</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <ul class="small mb-0" style="font-size: 0.8rem;">
+                                        <li>Canvas Apps</li>
+                                        <li>Model-Driven Apps</li>
+                                        <li>Cloud Flows (Power Automate)</li>
+                                        <li>Connection References</li>
+                                        <li>Environment Variable Definitions</li>
+                                        <li>Custom Controls (PCF)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Development -->
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark py-2">
+                                    <small class="fw-bold"><i class="bi bi-code-square"></i> Development</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <ul class="small mb-0" style="font-size: 0.8rem;">
+                                        <li>Plugin Assemblies</li>
+                                        <li>Plugin Steps</li>
+                                        <li>Web Resources (HTML/CSS/JS)</li>
+                                        <li>Email Templates</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Azure -->
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white py-2">
+                                    <small class="fw-bold"><i class="bi bi-cloud"></i> Azure</small>
+                                </div>
+                                <div class="card-body p-2">
+                                    <ul class="small mb-0" style="font-size: 0.8rem;">
+                                        <li>Azure Functions</li>
+                                        <li>Azure Logic Apps</li>
+                                        <li>Other Azure Resources</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0" role="alert">
+                        <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> The tool automatically groups related components (e.g., Tables with their Columns, Plugin Assemblies with their Steps) for better organization in the output.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Got it!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-4 py-3 bg-light border-top small text-muted">
+        Release HTML Generator Enhanced <i class="bi bi-c-circle"></i> <strong>CodeCrafter.89</strong> — Making
+        releases less painful.
     </footer>
 
-
     <script>
-        // Read a single cell using A1 address (e.g., B1)
-        function getCell(ws, addr) {
-            const cell = ws[addr];
-            if (!cell) return "";
-            // Prefer raw value; fall back to formatted string if present
-            return String(cell.v ?? cell.w ?? "");
-        }
-    </script>
+        // Global state
+        let componentData = [];
+        let solutionName = "";
 
-    <script>
-        /* ---------- Utilities ---------- */
+        // Utility functions
         const ESC = (s) => String(s ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;");
+
         const norm = (s) => String(s ?? "").trim();
-        const typeKey = (s) => norm(s).toLowerCase();
+
         function normalizeType(s) {
             const t = String(s || "").trim().toLowerCase();
-
-            // Patterns: if any predicate returns true, we normalize to the canonical name
             const patterns = [
-                { name: "Table", test: v => v === "table" },
-                { name: "Column", test: v => v === "column" },
+                { name: "Table", test: v => v === "table" || v === "entity" },
+                { name: "Column", test: v => v === "column" || v === "field" || v === "attribute" },
                 { name: "Relationship", test: v => v === "relationship" },
-                { name: "Main form", test: v => v === "main form" || v === "mainform" },
+                { name: "Main Form", test: v => v === "main form" || v === "mainform" || v === "form" },
                 { name: "View", test: v => v === "view" },
-                { name: "Canvas App", test: v => v === "canvas app" },
-                { name: "Cloud Flow", test: v => v === "cloud flow" },
-                { name: "Custom Control", test: v => v === "custom control" },
-                { name: "Model - Driven App", test: v => v === "model - driven app" || v === "model-driven app" },
-                { name: "Plugin Assembly", test: v => v === "plugin assembly" },
-                { name: "Plugin Step", test: v => v === "plugin step" },
-                { name: "Security Role", test: v => v === "security role" },
-
-                // 🔹 Flexible match for Web Resource with suffixes like "(JScript)" or "(HTML)"
-                { name: "Web Resource", test: v => v.startsWith("web resource") },
-
-                { name: "Environment Variable Definition", test: v => v === "environment variable definition" },
-                { name: "Email Template", test: v => v === "email template" },
+                { name: "Canvas App", test: v => v === "canvas app" || v.includes("canvas") },
+                { name: "Cloud Flow", test: v => v === "cloud flow" || v === "flow" || v.includes("power automate") },
+                { name: "Custom Control", test: v => v === "custom control" || v.includes("pcf") },
+                { name: "Model-Driven App", test: v => v === "model - driven app" || v === "model-driven app" || v.includes("model driven") },
+                { name: "Plugin Assembly", test: v => v === "plugin assembly" || v.includes("assembly") },
+                { name: "Plugin Step", test: v => v === "plugin step" || v.includes("plugin") },
+                { name: "Security Role", test: v => v === "security role" || v === "role" },
+                { name: "Web Resource", test: v => v.startsWith("web resource") || v.includes("webresource") },
+                { name: "Environment Variable Definition", test: v => v === "environment variable definition" || v.includes("env var") },
+                { name: "Email Template", test: v => v === "email template" || v.includes("template") },
+                { name: "Business Process Flow", test: v => v.includes("bpf") || v.includes("business process") },
+                { name: "Dashboard", test: v => v === "dashboard" },
+                { name: "Chart", test: v => v === "chart" },
+                { name: "Sitemap", test: v => v === "sitemap" || v === "site map" },
+                { name: "Connection Reference", test: v => v.includes("connection") },
+                { name: "Choice", test: v => v === "choice" || v === "option set" || v === "optionset" },
+                { name: "Azure Function", test: v => v.includes("azure function") || v.includes("function app") },
+                { name: "Azure Logic App", test: v => v.includes("logic app") },
+                { name: "Azure Resource", test: v => v.includes("azure") && !v.includes("function") && !v.includes("logic") },
             ];
 
             const hit = patterns.find(p => p.test(t));
             return hit ? hit.name : s;
         }
+
+        function getCell(ws, addr) {
+            const cell = ws[addr];
+            if (!cell) return "";
+            return String(cell.v ?? cell.w ?? "");
+        }
+
         function pad(n) { return String(n).padStart(2, "0"); }
+
         function customDateFormat(d, fmt = "DD/MM/YYYY HH:mm") {
             const DD = pad(d.getDate()), MM = pad(d.getMonth() + 1), YYYY = d.getFullYear();
             const HH = pad(d.getHours()), mm = pad(d.getMinutes()), ss = pad(d.getSeconds());
-            return fmt.replace("DD", DD).replace("MM", MM).replace("YYYY", YYYY).replace("HH", HH).replace("mm", mm).replace("ss", ss);
+            return fmt.replace("DD", DD).replace("MM", MM).replace("YYYY", YYYY)
+                .replace("HH", HH).replace("mm", mm).replace("ss", ss);
         }
-        function formatDate(v, fmt) {
+
+        function formatDate(v, fmt = "DD/MM/YYYY HH:mm") {
             if (!v) return "";
             try {
                 if (typeof v === "number") {
@@ -194,21 +534,25 @@
             } catch (e) { }
             return String(v);
         }
+
         const fuzz = (s) => String(s || "").replace(/^\uFEFF/, "").toLowerCase().replace(/[\s\-_]+/g, " ").trim();
+
         const HEADER_ALIASES = {
             "solution unique name": ["solution unique name", "solutionuniquename", "solution name", "solution"],
-            "related table": ["related table", "related entity", "entity", "table name"],
+            "related table": ["related table", "related entity", "entity", "table name", "table"],
             "component type": ["component type", "componenttype", "type", "component"],
             "display name": ["display name", "displayname", "label", "friendly name"],
             "name": ["name", "schema name", "logical name", "internal name"],
             "last modified by": ["last modified by", "modified by"],
             "last modified on": ["last modified on", "modified on", "last updated on", "updated on"]
         };
+
         function detectHeaderRow(sheet) {
             const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
             const maxScan = Math.min(10, rows.length);
             let bestIdx = -1, bestScore = -1;
             const targets = Object.keys(HEADER_ALIASES);
+
             for (let i = 0; i < maxScan; i++) {
                 const row = rows[i] || [];
                 const fz = row.map(fuzz);
@@ -221,6 +565,7 @@
             }
             return { headerRowIndex: bestIdx, rows };
         }
+
         function buildHeaderMap(headerRowValues) {
             const map = {};
             const fz = headerRowValues.map(fuzz);
@@ -232,18 +577,22 @@
             }
             return map;
         }
+
         function pick(arr, idx) {
             if (idx == null || idx < 0 || idx >= arr.length) return "";
             const v = arr[idx];
             return v == null ? "" : String(v);
         }
+
         function parseRows(sheet, dateFormat) {
             const { headerRowIndex, rows } = detectHeaderRow(sheet);
             if (headerRowIndex < 0) throw new Error("Could not detect header row. Please ensure the sheet has headers.");
+
             const headerRow = rows[headerRowIndex];
             const headerMap = buildHeaderMap(headerRow);
             const idxOf = (name) => headerMap[name];
             const dataRows = rows.slice(headerRowIndex + 1);
+
             const normalized = dataRows
                 .filter(r => r && r.some(cell => String(cell || "").trim() !== ""))
                 .map(r => ({
@@ -254,56 +603,137 @@
                     displayName: norm(pick(r, idxOf("display name"))),
                     name: norm(pick(r, idxOf("name"))),
                     lastModifiedBy: norm(pick(r, idxOf("last modified by"))),
-                    lastModifiedOn: formatDate(pick(r, idxOf("last modified on")), dateFormat)
+                    lastModifiedOn: formatDate(pick(r, idxOf("last modified on")), dateFormat),
+                    componentStatus: "New", // Default status
+                    description: "" // Default empty description
                 }));
+
             return normalized;
         }
 
-        /* ---------- HTML builder (no table semantics; follows your structure) ---------- */
+        // Step navigation
+        function goToStep(stepNumber) {
+            // Hide all steps
+            document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.step').forEach(s => {
+                s.classList.remove('active');
+                s.classList.remove('completed');
+            });
 
-        function buildHTML(rows, options) {
-            const { dateFormat = "DD/MM/YYYY HH:mm", solutionFromCell = "" } = options || {};
+            // Show current step
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+            document.getElementById(`step${stepNumber}-indicator`).classList.add('active');
 
-            // Normalize rows
+            // Mark previous steps as completed
+            for (let i = 1; i < stepNumber; i++) {
+                document.getElementById(`step${i}-indicator`).classList.add('completed');
+            }
+        }
+
+        // Render grid
+        function renderGrid() {
+            const tbody = document.getElementById('gridBody');
+            tbody.innerHTML = '';
+
+            componentData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="form-check-input row-select" data-index="${index}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${ESC(row.componentType)}" 
+                            data-index="${index}" data-field="componentType">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${ESC(row.relatedTable)}" 
+                            data-index="${index}" data-field="relatedTable">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${ESC(row.displayName)}" 
+                            data-index="${index}" data-field="displayName">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" value="${ESC(row.name)}" 
+                            data-index="${index}" data-field="name">
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" data-index="${index}" data-field="componentStatus">
+                            <option value="New" ${row.componentStatus === 'New' ? 'selected' : ''}>New</option>
+                            <option value="Modified" ${row.componentStatus === 'Modified' ? 'selected' : ''}>Modified</option>
+                            <option value="Existing" ${row.componentStatus === 'Existing' ? 'selected' : ''}>Existing</option>
+                            <option value="Deprecated" ${row.componentStatus === 'Deprecated' ? 'selected' : ''}>Deprecated</option>
+                        </select>
+                    </td>
+                    <td>
+                        <textarea class="form-control form-control-sm" rows="1" 
+                            data-index="${index}" data-field="description">${ESC(row.description)}</textarea>
+                    </td>
+                    <td><small class="text-muted">${ESC(row.lastModifiedBy)}</small></td>
+                    <td><small class="text-muted">${ESC(row.lastModifiedOn)}</small></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update row count
+            document.getElementById('rowCount').textContent = `${componentData.length} component(s)`;
+
+            // Add event listeners for grid inputs
+            tbody.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    const field = e.target.dataset.field;
+                    componentData[index][field] = e.target.value;
+                });
+            });
+        }
+
+        // Build HTML output
+        function buildHTML(rows, solutionTitle) {
             const R = rows.map(r => ({
                 solutionUniqueName: (r.solutionUniqueName || "").trim(),
                 relatedTable: (r.relatedTable || "").trim(),
-                componentTypeRaw: (r.componentTypeRaw || "").trim(),
-                componentType: normalizeType(r.componentType || r.componentTypeRaw),
+                componentType: normalizeType(r.componentType),
                 displayName: (r.displayName || "").trim(),
                 name: (r.name || "").trim(),
                 lastModifiedBy: (r.lastModifiedBy || "").trim(),
                 lastModifiedOn: (r.lastModifiedOn || "").trim(),
+                componentStatus: (r.componentStatus || "").trim(),
+                description: (r.description || "").trim()
             }));
 
-            // Resolve header title: prefer cell value (e.g., B1), fall back to first non-empty “Solution Unique Name”
-            const solutionTitle =
-                (solutionFromCell && solutionFromCell.trim()) ||
-                (R.find(x => x.solutionUniqueName)?.solutionUniqueName) ||
-                "Solution";
-
+            const title = solutionTitle || (R.find(x => x.solutionUniqueName)?.solutionUniqueName) || "Solution";
             const label = (row) => (row.displayName || row.name || "").trim();
             const bucket = (t) => R.filter(r => r.componentType === t);
 
-            // --- Entity hierarchy: only Table and Column under each “Related Table” ---
-            const tableLike = R.filter(r =>
-                r.relatedTable && (r.componentType === "Table" || r.componentType === "Column")
-            );
+            // Group components
+            const tableLike = R.filter(r => r.relatedTable && (r.componentType === "Table" || r.componentType === "Column"));
             const entities = Array.from(new Set(tableLike.map(r => r.relatedTable)));
 
-            // Other component buckets (listed as separate sections)
             const canvasApps = bucket("Canvas App");
             const cloudFlows = bucket("Cloud Flow");
             const customControls = bucket("Custom Control");
-            const modelDrivenApps = bucket("Model - Driven App");
+            const modelDrivenApps = bucket("Model-Driven App");
             const pluginAssemblies = bucket("Plugin Assembly");
             const pluginSteps = bucket("Plugin Step");
             const securityRoles = bucket("Security Role");
             const webResources = bucket("Web Resource");
             const envVarDefs = bucket("Environment Variable Definition");
             const emailTemplates = bucket("Email Template");
+            const bpfs = bucket("Business Process Flow");
+            const dashboards = bucket("Dashboard");
+            const charts = bucket("Chart");
+            const sitemaps = bucket("Sitemap");
+            const connections = bucket("Connection Reference");
+            const choices = bucket("Choice");
+            const azureFunctions = bucket("Azure Function");
+            const logicApps = bucket("Azure Logic App");
+            const azureResources = bucket("Azure Resource");
+            const mainForms = bucket("Main Form");
+            const views = bucket("View");
+            const relationships = bucket("Relationship");
 
-            // Link Plugin Steps to Assemblies heuristically (name containment)
+            // Link Plugin Steps to Assemblies
             const stepsByAssembly = new Map();
             for (const asm of pluginAssemblies) {
                 const key = (asm.name || asm.displayName || "").toLowerCase();
@@ -319,202 +749,503 @@
                 if (!linked) unlinkedSteps.push(step);
             }
 
-            let html = `<html>\n<head>\n<title>${ESC(solutionTitle)}</title>\n</head>\n<body style="overflow-wrap: break-word;">\n`;
-            html += `<p><strong>${ESC(solutionTitle)}</strong></p>\n`;
-            html += `<p><strong>Release Components</strong></p>\n`;
+            // Build HTML
+            let html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>${ESC(title)}</title>\n`;
+            html += `<style>\n`;
+            html += `body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; overflow-wrap: break-word; }\n`;
+            html += `h1 { color: #198754; border-bottom: 3px solid #198754; padding-bottom: 10px; }\n`;
+            html += `h2 { color: #0d6efd; margin-top: 20px; }\n`;
+            html += `ul { list-style-type: none; padding-left: 0; }\n`;
+            html += `li { margin: 8px 0; }\n`;
+            html += `li > ul { padding-left: 20px; }\n`;
+            html += `.component-item { padding: 8px; border-left: 3px solid #dee2e6; margin: 5px 0; }\n`;
+            html += `.status-new { border-left-color: #198754; }\n`;
+            html += `.status-modified { border-left-color: #ffc107; }\n`;
+            html += `.status-existing { border-left-color: #0d6efd; }\n`;
+            html += `.status-deprecated { border-left-color: #dc3545; }\n`;
+            html += `.status-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; font-weight: bold; margin-left: 8px; }\n`;
+            html += `.badge-new { background-color: #d1e7dd; color: #0f5132; }\n`;
+            html += `.badge-modified { background-color: #fff3cd; color: #664d03; }\n`;
+            html += `.badge-existing { background-color: #cfe2ff; color: #084298; }\n`;
+            html += `.badge-deprecated { background-color: #f8d7da; color: #842029; }\n`;
+            html += `.description { color: #6c757d; font-size: 0.9em; margin-top: 4px; font-style: italic; }\n`;
+            html += `</style>\n`;
+            html += `</head>\n<body>\n`;
+
+            html += `<h1>${ESC(title)}</h1>\n`;
+            html += `<h2>Release Components</h2>\n`;
             html += `<ul>\n`;
 
-            // --- Entity Component -> Table(s) -> Column(s) ---
-            for (const entity of entities) {
-                const entityRows = tableLike.filter(r => r.relatedTable === entity);
-                const tables = entityRows.filter(r => r.componentType === "Table");
-                const columns = entityRows.filter(r => r.componentType === "Column");
+            // Helper function to render component item
+            const renderComponent = (comp) => {
+                const statusClass = `status-${comp.componentStatus.toLowerCase()}`;
+                const badgeClass = `badge-${comp.componentStatus.toLowerCase()}`;
+                let item = `<li class="component-item ${statusClass}">\n`;
+                item += `  <strong>${ESC(label(comp))}</strong>\n`;
+                if (comp.componentStatus) {
+                    item += `  <span class="status-badge ${badgeClass}">${ESC(comp.componentStatus)}</span>\n`;
+                }
+                if (comp.description) {
+                    item += `  <div class="description">${ESC(comp.description)}</div>\n`;
+                }
+                item += `</li>\n`;
+                return item;
+            };
 
-                html += `  <li><strong>Entity Component</strong>\n`;
-                html += `    <ul>\n`;
+            // Entity Components (Tables and Columns)
+            if (entities.length > 0) {
+                for (const entity of entities) {
+                    const entityRows = tableLike.filter(r => r.relatedTable === entity);
+                    const tables = entityRows.filter(r => r.componentType === "Table");
+                    const columns = entityRows.filter(r => r.componentType === "Column");
 
-                if (tables.length) {
-                    // If there are multiple table rows for the same entity, list each
-                    for (const t of tables) {
-                        html += `      <li><strong>Table - ${ESC(label(t) || entity)}</strong>\n`;
-                        // Columns under this entity
-                        if (columns.length) {
+                    html += `  <li><strong>Entity Component - ${ESC(entity)}</strong>\n`;
+                    html += `    <ul>\n`;
+
+                    if (tables.length) {
+                        for (const t of tables) {
+                            html += `      <li><strong>Table</strong>\n`;
                             html += `        <ul>\n`;
-                            for (const c of columns) {
-                                html += `          <li>${ESC(label(c))}</li>\n`;
+                            html += `          ${renderComponent(t)}`;
+                            if (columns.length) {
+                                html += `          <li><strong>Columns</strong>\n`;
+                                html += `            <ul>\n`;
+                                for (const c of columns) {
+                                    html += `              ${renderComponent(c)}`;
+                                }
+                                html += `            </ul>\n`;
+                                html += `          </li>\n`;
                             }
                             html += `        </ul>\n`;
+                            html += `      </li>\n`;
                         }
-                        html += `      </li>\n`;
-                    }
-                } else {
-                    // No explicit table row—still show a table wrapper using the entity name
-                    html += `      <li><strong>Table - ${ESC(entity)}</strong>\n`;
-                    if (columns.length) {
+                    } else if (columns.length) {
+                        html += `      <li><strong>Columns</strong>\n`;
                         html += `        <ul>\n`;
                         for (const c of columns) {
-                            html += `          <li>${ESC(label(c))}</li>\n`;
+                            html += `          ${renderComponent(c)}`;
                         }
                         html += `        </ul>\n`;
+                        html += `      </li>\n`;
                     }
-                    html += `      </li>\n`;
-                }
 
+                    html += `    </ul>\n`;
+                    html += `  </li>\n`;
+                }
+            }
+
+            // Forms
+            if (mainForms.length > 0) {
+                html += `  <li><strong>Forms</strong>\n`;
+                html += `    <ul>\n`;
+                for (const f of mainForms) {
+                    html += `      ${renderComponent(f)}`;
+                }
                 html += `    </ul>\n`;
                 html += `  </li>\n`;
             }
 
-            // --- Independent sections (not nested under Entity) ---
-            if (cloudFlows.length) {
-                html += `  <li><strong>Cloud Flow</strong>\n    <ul>\n`;
-                for (const f of cloudFlows) html += `      <li>${ESC(label(f))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            if (canvasApps.length) {
-                html += `  <li><strong>Canvas App</strong>\n    <ul>\n`;
-                for (const c of canvasApps) html += `      <li>${ESC(label(c))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            if (customControls.length) {
-                html += `  <li><strong>Custom Control</strong>\n    <ul>\n`;
-                for (const c of customControls) html += `      <li>${ESC(label(c))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            if (modelDrivenApps.length) {
-                html += `  <li><strong>Model - Driven App</strong>\n    <ul>\n`;
-                for (const m of modelDrivenApps) html += `      <li>${ESC(label(m))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-
-            for (const asm of pluginAssemblies) {
-                const key = (asm.name || asm.displayName || "").toLowerCase();
-                const steps = stepsByAssembly.get(key) || [];
-                html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>\n    <ul>\n`;
-                if (steps.length) {
-                    for (const s of steps) {
-                        const stepLabel = (s.displayName || s.name || "").trim();
-                        html += `      <li>Plugin Step - ${ESC(stepLabel || "Unnamed Step")}</li>\n`;
-                    }
-                } else {
-                    html += `      <li class="text-muted">No linked Plugin Steps found</li>\n`;
+            // Views
+            if (views.length > 0) {
+                html += `  <li><strong>Views</strong>\n`;
+                html += `    <ul>\n`;
+                for (const v of views) {
+                    html += `      ${renderComponent(v)}`;
                 }
-                html += `    </ul>\n  </li>\n`
-
-            }
-            if (unlinkedSteps.length) {
-                html += `  <li><strong>Plugin Step (unlinked)</strong>\n    <ul>\n`;
-                for (const s of unlinkedSteps) html += `      <li>${ESC(label(s))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
-            if (securityRoles.length) {
-                html += `  <li><strong>Security Role</strong>\n    <ul>\n`;
-                for (const s of securityRoles) html += `      <li>${ESC(label(s))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
+            // Relationships
+            if (relationships.length > 0) {
+                html += `  <li><strong>Relationships</strong>\n`;
+                html += `    <ul>\n`;
+                for (const r of relationships) {
+                    html += `      ${renderComponent(r)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
-            if (webResources.length) {
-                html += `  <li><strong>Web Resource</strong>\n    <ul>\n`;
-                for (const w of webResources) html += `      <li>${ESC(label(w))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
+            // Business Process Flows
+            if (bpfs.length > 0) {
+                html += `  <li><strong>Business Process Flows</strong>\n`;
+                html += `    <ul>\n`;
+                for (const b of bpfs) {
+                    html += `      ${renderComponent(b)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
-            if (envVarDefs.length) {
-                html += `  <li><strong>Environment Variable Definition</strong>\n    <ul>\n`;
-                for (const e of envVarDefs) html += `      <li>${ESC(label(e))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
+            // Cloud Flows
+            if (cloudFlows.length > 0) {
+                html += `  <li><strong>Cloud Flows</strong>\n`;
+                html += `    <ul>\n`;
+                for (const f of cloudFlows) {
+                    html += `      ${renderComponent(f)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
-            if (emailTemplates.length) {
-                html += `  <li><strong>Email Template</strong>\n    <ul>\n`;
-                for (const et of emailTemplates) html += `      <li>${ESC(label(et))}</li>\n`;
-                html += `    </ul>\n  </li>\n`;
+            // Canvas Apps
+            if (canvasApps.length > 0) {
+                html += `  <li><strong>Canvas Apps</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of canvasApps) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
-            html += `</ul>\n<p>&nbsp;</p>\n`;
+            // Model-Driven Apps
+            if (modelDrivenApps.length > 0) {
+                html += `  <li><strong>Model-Driven Apps</strong>\n`;
+                html += `    <ul>\n`;
+                for (const m of modelDrivenApps) {
+                    html += `      ${renderComponent(m)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Dashboards
+            if (dashboards.length > 0) {
+                html += `  <li><strong>Dashboards</strong>\n`;
+                html += `    <ul>\n`;
+                for (const d of dashboards) {
+                    html += `      ${renderComponent(d)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Charts
+            if (charts.length > 0) {
+                html += `  <li><strong>Charts</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of charts) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Sitemaps
+            if (sitemaps.length > 0) {
+                html += `  <li><strong>Sitemaps</strong>\n`;
+                html += `    <ul>\n`;
+                for (const s of sitemaps) {
+                    html += `      ${renderComponent(s)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Plugin Assemblies with Steps
+            if (pluginAssemblies.length > 0) {
+                for (const asm of pluginAssemblies) {
+                    const key = (asm.name || asm.displayName || "").toLowerCase();
+                    const steps = stepsByAssembly.get(key) || [];
+                    html += `  <li><strong>Plugin Assembly</strong>\n`;
+                    html += `    <ul>\n`;
+                    html += `      ${renderComponent(asm)}`;
+                    if (steps.length) {
+                        html += `      <li><strong>Plugin Steps</strong>\n`;
+                        html += `        <ul>\n`;
+                        for (const s of steps) {
+                            html += `          ${renderComponent(s)}`;
+                        }
+                        html += `        </ul>\n`;
+                        html += `      </li>\n`;
+                    }
+                    html += `    </ul>\n`;
+                    html += `  </li>\n`;
+                }
+            }
+
+            // Unlinked Plugin Steps
+            if (unlinkedSteps.length > 0) {
+                html += `  <li><strong>Plugin Steps (Unlinked)</strong>\n`;
+                html += `    <ul>\n`;
+                for (const s of unlinkedSteps) {
+                    html += `      ${renderComponent(s)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Security Roles
+            if (securityRoles.length > 0) {
+                html += `  <li><strong>Security Roles</strong>\n`;
+                html += `    <ul>\n`;
+                for (const s of securityRoles) {
+                    html += `      ${renderComponent(s)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Web Resources
+            if (webResources.length > 0) {
+                html += `  <li><strong>Web Resources</strong>\n`;
+                html += `    <ul>\n`;
+                for (const w of webResources) {
+                    html += `      ${renderComponent(w)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Custom Controls
+            if (customControls.length > 0) {
+                html += `  <li><strong>Custom Controls (PCF)</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of customControls) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Environment Variables
+            if (envVarDefs.length > 0) {
+                html += `  <li><strong>Environment Variable Definitions</strong>\n`;
+                html += `    <ul>\n`;
+                for (const e of envVarDefs) {
+                    html += `      ${renderComponent(e)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Connection References
+            if (connections.length > 0) {
+                html += `  <li><strong>Connection References</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of connections) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Choices (Option Sets)
+            if (choices.length > 0) {
+                html += `  <li><strong>Choices (Option Sets)</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of choices) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Email Templates
+            if (emailTemplates.length > 0) {
+                html += `  <li><strong>Email Templates</strong>\n`;
+                html += `    <ul>\n`;
+                for (const e of emailTemplates) {
+                    html += `      ${renderComponent(e)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Azure Functions
+            if (azureFunctions.length > 0) {
+                html += `  <li><strong>Azure Functions</strong>\n`;
+                html += `    <ul>\n`;
+                for (const a of azureFunctions) {
+                    html += `      ${renderComponent(a)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Logic Apps
+            if (logicApps.length > 0) {
+                html += `  <li><strong>Azure Logic Apps</strong>\n`;
+                html += `    <ul>\n`;
+                for (const l of logicApps) {
+                    html += `      ${renderComponent(l)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Other Azure Resources
+            if (azureResources.length > 0) {
+                html += `  <li><strong>Azure Resources</strong>\n`;
+                html += `    <ul>\n`;
+                for (const a of azureResources) {
+                    html += `      ${renderComponent(a)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            html += `</ul>\n`;
+            html += `<p>&nbsp;</p>\n`;
+            html += `<hr>\n`;
+            html += `<p style="font-size: 0.9em; color: #6c757d;">Generated on ${new Date().toLocaleString()}</p>\n`;
             html += `</body>\n</html>`;
+
             return html;
         }
 
-        /* ---------- Wire up UI after DOM is ready ---------- */
+        // Event listeners
         document.addEventListener("DOMContentLoaded", () => {
-            const fileInput = document.getElementById("fileInput");
-            const sheetNameInput = document.getElementById("sheetName");
-            const dateFormatInput = document.getElementById("dateFormat");
-            const output = document.getElementById("output");
-            const preview = document.getElementById("preview");
-            const statusEl = document.getElementById("status");
-
-            const ensureXLSX = () => !!window.XLSX;
-
-
-            document.getElementById("generateBtn").addEventListener("click", async () => {
-                const statusEl = document.getElementById("status");
+            // Load file
+            document.getElementById("loadBtn").addEventListener("click", async () => {
                 const file = document.getElementById("fileInput").files?.[0];
-                const sheetNameInput = document.getElementById("sheetName");
-                const dateFormatInput = document.getElementById("dateFormat");
-                const solutionCellInput = document.getElementById("solutionCell");
-                const output = document.getElementById("output");
-                const preview = document.getElementById("preview");
+                const statusEl = document.getElementById("loadStatus");
 
-                if (!file) { statusEl.textContent = "Please select an Excel file."; return; }
-                if (!window.XLSX) { statusEl.textContent = "SheetJS not loaded. Check CDN/network."; return; }
+                if (!file) {
+                    statusEl.textContent = "Please select an Excel file.";
+                    return;
+                }
 
-                statusEl.textContent = "Parsing Excel…";
+                if (!window.XLSX) {
+                    statusEl.textContent = "SheetJS not loaded. Check CDN/network.";
+                    return;
+                }
+
+                statusEl.textContent = "Loading Excel file...";
+
                 try {
                     const data = await file.arrayBuffer();
                     const wb = XLSX.read(data, { type: "array" });
-
-                    const sheetName = sheetNameInput.value || wb.SheetNames[0];
+                    const sheetName = wb.SheetNames[0];
                     const ws = wb.Sheets[sheetName];
+
                     if (!ws) throw new Error(`Sheet '${sheetName}' not found.`);
 
-                    // Robust row parsing (you already have parseRows)
-                    const rows = parseRows(ws, dateFormatInput.value);
+                    // Get solution name from cell
+                    const solutionCellAddr = (document.getElementById("solutionCell").value || "B1").trim();
+                    solutionName = getCell(ws, solutionCellAddr) || "Solution";
 
-                    // NEW: get solution name from the specified cell (defaults to B1)
-                    const solutionCellAddr = (solutionCellInput.value || "B1").trim();
-                    const solutionFromCell = getCell(ws, solutionCellAddr);
+                    // Parse rows
+                    componentData = parseRows(ws, "DD/MM/YYYY HH:mm");
 
-                    const html = buildHTML(rows, {
-                        dateFormat: dateFormatInput.value,
-                        solutionFromCell
-                    });
+                    statusEl.textContent = `Loaded ${componentData.length} component(s) from '${sheetName}'`;
 
-                    output.textContent = html;
-                    preview.innerHTML = html;
-                    statusEl.textContent = `Generated from sheet '${sheetName}' with ${rows.length} row(s).`;
+                    // Render grid and move to step 2
+                    renderGrid();
+                    setTimeout(() => goToStep(2), 500);
+
                 } catch (e) {
                     console.error(e);
                     statusEl.textContent = `Error: ${e.message}`;
                 }
             });
 
+            // Back to upload
+            document.getElementById("backToUploadBtn").addEventListener("click", () => {
+                goToStep(1);
+            });
 
-            document.getElementById("copyBtn").addEventListener("click", async () => {
+            // Proceed to generate
+            document.getElementById("proceedToGenerateBtn").addEventListener("click", () => {
+                goToStep(3);
+            });
+
+            // Back to edit
+            document.getElementById("backToEditBtn").addEventListener("click", () => {
+                goToStep(2);
+            });
+
+            // Select all checkbox
+            document.getElementById("selectAll").addEventListener("change", (e) => {
+                document.querySelectorAll('.row-select').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+            });
+
+            // Add row
+            document.getElementById("addRowBtn").addEventListener("click", () => {
+                componentData.push({
+                    solutionUniqueName: solutionName,
+                    relatedTable: "",
+                    componentTypeRaw: "",
+                    componentType: "",
+                    displayName: "",
+                    name: "",
+                    lastModifiedBy: "",
+                    lastModifiedOn: "",
+                    componentStatus: "New",
+                    description: ""
+                });
+                renderGrid();
+            });
+
+            // Remove selected rows
+            document.getElementById("removeSelectedBtn").addEventListener("click", () => {
+                const selected = Array.from(document.querySelectorAll('.row-select:checked'))
+                    .map(cb => parseInt(cb.dataset.index))
+                    .sort((a, b) => b - a);
+
+                selected.forEach(index => {
+                    componentData.splice(index, 1);
+                });
+
+                document.getElementById("selectAll").checked = false;
+                renderGrid();
+            });
+
+            // Generate HTML
+            document.getElementById("generateBtn").addEventListener("click", () => {
+                const statusEl = document.getElementById("generateStatus");
+                const output = document.getElementById("output");
+                const preview = document.getElementById("preview");
+
                 try {
-                    await navigator.clipboard.writeText(output.textContent || "");
-                    statusEl.textContent = "HTML copied to clipboard.";
+                    const html = buildHTML(componentData, solutionName);
+                    output.textContent = html;
+                    preview.innerHTML = html;
+                    statusEl.textContent = `Generated HTML for ${componentData.length} component(s)`;
                 } catch (e) {
-                    statusEl.textContent = "Clipboard copy failed.";
+                    console.error(e);
+                    statusEl.textContent = `Error: ${e.message}`;
                 }
             });
 
+            // Copy HTML
+            document.getElementById("copyBtn").addEventListener("click", async () => {
+                const statusEl = document.getElementById("generateStatus");
+                const output = document.getElementById("output");
+
+                try {
+                    await navigator.clipboard.writeText(output.textContent || "");
+                    statusEl.textContent = "HTML copied to clipboard!";
+                } catch (e) {
+                    statusEl.textContent = "Failed to copy to clipboard.";
+                }
+            });
+
+            // Download HTML
             document.getElementById("downloadBtn").addEventListener("click", () => {
+                const statusEl = document.getElementById("generateStatus");
+                const output = document.getElementById("output");
                 const text = output.textContent || "";
+
+                if (!text) {
+                    statusEl.textContent = "No HTML to download. Generate first.";
+                    return;
+                }
+
                 const blob = new Blob([text], { type: "text/html;charset=utf-8" });
                 const a = document.createElement("a");
+                const filename = `${solutionName.replace(/[^a-z0-9]/gi, '_')}_Release.html`;
                 a.href = URL.createObjectURL(blob);
-                a.download = solutionFromCell + ".html";
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 URL.revokeObjectURL(a.href);
                 a.remove();
-                statusEl.textContent = solutionFromCell + ".html";
+                statusEl.textContent = `Downloaded: ${filename}`;
             });
         });
     </script>
