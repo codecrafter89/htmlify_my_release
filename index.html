@@ -286,7 +286,7 @@
 
         /* Table */
         .editable-grid {
-            max-height: 500px;
+            max-height: 700px;
             overflow-y: auto;
             overflow-x: auto;
             border-radius: 0.75rem;
@@ -749,8 +749,8 @@
                                     <th contenteditable="false">Related Table/Entity</th>
                                     <th contenteditable="false">Display Name</th>
                                     <th contenteditable="false">Name</th>
-                                    <th style="width: 150px;">Component Status</th>
-                                    <th style="width: 250px;">Description</th>
+                                    <th style="width: 200px;">Component Status</th>
+                                    <th style="width: 350px;">Description</th>
                                 </tr>
                             </thead>
                             <tbody id="gridBody">
@@ -817,7 +817,7 @@
                         </div>
                         <div class="card-body">
                             <pre id="output" class="code"
-                                style="max-height: 450px; overflow:auto;"></pre>
+                                style="min-height: 350px;"></pre>
                         </div>
                     </div>
                 </div>
@@ -1242,7 +1242,7 @@
                         </select>
                     </td>
                     <td>
-                        <textarea class="form-control form-control-sm" rows="4" 
+                        <textarea class="form-control form-control-sm" rows="3" 
                             data-index="${index}" data-field="description">${ESC(row.description)}</textarea>
                     </td>
                     
