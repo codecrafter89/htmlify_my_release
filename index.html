@@ -597,6 +597,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -617,7 +618,7 @@
             .step::after {
                 display: none;
             }
-            
+
             .step {
                 flex-direction: row;
                 justify-content: flex-start;
@@ -633,7 +634,8 @@
         }
 
         /* Improve readability */
-        h5, h6 {
+        h5,
+        h6 {
             letter-spacing: -0.3px;
         }
 
@@ -812,12 +814,12 @@
 
                 <div class="col-md-6">
                     <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;">
+                        <div class="card-header text-white py-3"
+                            style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;">
                             <i class="bi bi-code-slash me-2"></i> Generated HTML (Raw)
                         </div>
                         <div class="card-body">
-                            <pre id="output" class="code"
-                                style="min-height: 350px;"></pre>
+                            <pre id="output" class="code" style="min-height: 350px;"></pre>
                         </div>
                     </div>
                 </div>
@@ -841,19 +843,70 @@
                     <h6 class="text-success fw-bold mb-3">
                         <i class="bi bi-list-check"></i> How to Use This Tool
                     </h6>
-                    
                     <div class="accordion accordion-flush mb-4" id="guidelinesAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1Guide">
-                                    <i class="bi bi-1-circle-fill text-success me-2"></i> Step 1: Upload Excel File
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#solutionExtractionGuide">
+                                    <i class="bi bi-1-circle-fill text-success me-2"></i> Step 1: Solution Component
+                                    Extraction – Step-by-Step Guide
                                 </button>
                             </h2>
-                            <div id="step1Guide" class="accordion-collapse collapse show" data-bs-parent="#guidelinesAccordion">
+
+                            <div id="solutionExtractionGuide" class="accordion-collapse show"
+                                data-bs-parent="#guidelinesAccordion">
+                                <div class="accordion-body">
+
+                                    <ul class="small">
+                                        <li>
+                                            <strong>Step 1: Install Solution Component Extractor</strong>
+                                            <ul>
+                                                <li>Open <strong>XrmToolBox</strong></li>
+                                                <li>Go to <strong>Tool Library</strong></li>
+                                                <li>Search for <strong>Solution Component Extractor</strong></li>
+                                                <li>Install and launch the tool</li>
+                                            </ul>
+                                        </li>
+
+                                        <li class="mt-2">
+                                            <strong>Step 2: Search Using Solution Unique Name</strong>
+                                            <ul>
+                                                <li>Do <strong>not</strong> use the solution display name</li>
+                                                <li>Enter the <strong>Solution Unique Name</strong></li>
+                                                <li>Click <strong>Search</strong> and wait for components to load</li>
+                                            </ul>
+                                        </li>
+
+                                        <li class="mt-2">
+                                            <strong>Step 3: Export Components to Excel</strong>
+                                            <ul>
+                                                <li>Click <strong>Export Data</strong> after components load</li>
+                                                <li>Save the Excel file locally</li>
+                                                <li><strong>Do not modify</strong> the sheet name or column structure
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#step1Guide">
+                                    <i class="bi bi-2-circle-fill text-success me-2"></i> Step 2: Upload Excel File
+                                </button>
+                            </h2>
+                            <div id="step1Guide" class="accordion-collapse collapse"
+                                data-bs-parent="#guidelinesAccordion">
                                 <div class="accordion-body">
                                     <ul class="small">
                                         <li>Select an Excel file (.xlsx or .xls) containing your component data</li>
-                                        <li>The file should have headers like: <code>Component Type</code>, <code>Display Name</code>, <code>Name</code>, <code>Related Table</code>, etc.</li>
+                                        <li>The file should have headers like: <code>Component Type</code>,
+                                            <code>Display Name</code>, <code>Name</code>, <code>Related Table</code>,
+                                            etc.
+                                        </li>
                                         <li>Optionally specify a cell (e.g., B1) containing your solution name</li>
                                         <li>The tool will auto-detect the header row and parse your data</li>
                                         <li>Click <strong>Load File</strong> to proceed</li>
@@ -861,43 +914,53 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2Guide">
-                                    <i class="bi bi-2-circle-fill text-success me-2"></i> Step 2: Edit Component Details
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#step2Guide">
+                                    <i class="bi bi-3-circle-fill text-success me-2"></i> Step 3: Edit Component Details
                                 </button>
                             </h2>
-                            <div id="step2Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                            <div id="step2Guide" class="accordion-collapse collapse"
+                                data-bs-parent="#guidelinesAccordion">
                                 <div class="accordion-body">
                                     <ul class="small">
                                         <li><strong>Review</strong> all loaded components in the editable grid</li>
-                                        <li><strong>Component Status:</strong> Select from New, Modified, Existing, or Deprecated</li>
-                                        <li><strong>Description:</strong> Add notes explaining what changed or what the component does</li>
-                                        <li><strong>Add Row:</strong> Manually add components not in your Excel file</li>
-                                        <li><strong>Remove Selected:</strong> Delete unwanted rows by checking the checkbox and clicking remove</li>
+                                        <li><strong>Component Status:</strong> Select from New, Modified, Existing, or
+                                            Deprecated</li>
+                                        <li><strong>Description:</strong> Add notes explaining what changed or what the
+                                            component does</li>
+                                        <li><strong>Add Row:</strong> Manually add components not in your Excel file
+                                        </li>
+                                        <li><strong>Remove Selected:</strong> Delete unwanted rows by checking the
+                                            checkbox and clicking remove</li>
                                         <li>All fields are editable - click to modify any value</li>
                                         <li>Click <strong>Proceed to Generate</strong> when ready</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="accordion-item">
                             <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3Guide">
-                                    <i class="bi bi-3-circle-fill text-success me-2"></i> Step 3: Generate HTML Output
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#step3Guide">
+                                    <i class="bi bi-4-circle-fill text-success me-2"></i> Step 4: Generate HTML Output
                                 </button>
                             </h2>
-                            <div id="step3Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                            <div id="step3Guide" class="accordion-collapse collapse"
+                                data-bs-parent="#guidelinesAccordion">
                                 <div class="accordion-body">
                                     <ul class="small">
-                                        <li>Click <strong>Generate HTML</strong> to create your formatted release documentation</li>
+                                        <li>Click <strong>Generate HTML</strong> to create your formatted release
+                                            documentation</li>
                                         <li>View the <strong>Rendered Preview</strong> to see how it will look</li>
                                         <li>Review the <strong>Raw HTML</strong> code on the right</li>
                                         <li><strong>Copy HTML:</strong> Copy the code to your clipboard</li>
                                         <li><strong>Download HTML:</strong> Save as a standalone HTML file</li>
-                                        <li>Status badges will be color-coded (New=Green, Modified=Yellow, Existing=Blue, Deprecated=Red)</li>
+                                        <li>Status badges will be color-coded (New=Green, Modified=Yellow,
+                                            Existing=Blue, Deprecated=Red)</li>
                                     </ul>
                                 </div>
                             </div>
@@ -910,13 +973,14 @@
                     <h6 class="text-success fw-bold mb-3">
                         <i class="bi bi-box-seam"></i> Supported Components
                     </h6>
-                    
+
                     <div class="row g-3">
                         <!-- Dynamics 365 / Dataverse -->
                         <div class="col-md-6">
                             <div class="card border-primary">
                                 <div class="card-header bg-primary text-white py-2">
-                                    <small class="fw-bold"><i class="bi bi-database"></i> Dynamics 365 / Dataverse</small>
+                                    <small class="fw-bold"><i class="bi bi-database"></i> Dynamics 365 /
+                                        Dataverse</small>
                                 </div>
                                 <div class="card-body p-2">
                                     <ul class="small mb-0" style="font-size: 0.8rem;">
@@ -990,7 +1054,9 @@
                     </div>
 
                     <div class="alert alert-info mt-3 mb-0" role="alert">
-                        <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> The tool automatically groups related components (e.g., Tables with their Columns, Plugin Assemblies with their Steps) for better organization in the output.
+                        <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> The tool automatically groups related
+                        components (e.g., Tables with their Columns, Plugin Assemblies with their Steps) for better
+                        organization in the output.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1186,7 +1252,7 @@
             document.getElementById('output').textContent = '';
             document.getElementById('preview').innerHTML = '';
             document.getElementById('generateStatus').textContent = '';
-            
+
             // Disable and hide copy/download buttons
             const copyBtn = document.getElementById('copyBtn');
             const downloadBtn = document.getElementById('downloadBtn');
@@ -1259,7 +1325,7 @@
                     const index = parseInt(e.target.dataset.index);
                     const field = e.target.dataset.field;
                     componentData[index][field] = e.target.value;
-                    
+
                     // Update status color if status changed
                     if (field === 'componentStatus') {
                         applyStatusColor(e.target);
@@ -1363,20 +1429,20 @@
             // Helper function to render component item with status and description
             const renderComponent = (comp, prefix = "") => {
                 let item = `${prefix}${ESC(label(comp))}`;
-                
+
                 // Add status in brackets with color if present
                 if (comp.componentStatus) {
                     const color = getStatusColor(comp.componentStatus);
                     item += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(comp.componentStatus)}]</span>`;
                 }
-                
+
                 let result = `<li>${item}`;
-                
+
                 // Add description on new line if present
                 if (comp.description) {
                     result += `\n<ul><li>${ESC(comp.description)}</li></ul>`;
                 }
-                
+
                 result += `</li>\n`;
                 return result;
             };
@@ -1391,24 +1457,24 @@
                     html += `  <li><strong>Entity Component</strong>\n`;
                     html += `    <ul>\n`;
                     html += `      <li><strong>Table - ${ESC(entity)}</strong>`;
-                    
+
                     // Add table status if available
                     if (tables.length > 0 && tables[0].componentStatus) {
                         const color = getStatusColor(tables[0].componentStatus);
                         html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(tables[0].componentStatus)}]</span>`;
                     }
-                    
+
                     // Add table description if available
                     if (tables.length > 0 && tables[0].description) {
                         html += `\n        <ul><li>${ESC(tables[0].description)}</li></ul>`;
                     }
-                    
+
                     // New Attributes List
                     if (columns.length > 0) {
                         const newCols = columns.filter(c => c.componentStatus === "New");
                         const modifiedCols = columns.filter(c => c.componentStatus === "Modified");
                         const existingCols = columns.filter(c => c.componentStatus === "Existing");
-                        
+
                         if (newCols.length > 0) {
                             html += `\n        <ul>\n          <li><strong>New Attributes List</strong>\n            <ul>\n`;
                             for (const c of newCols) {
@@ -1416,7 +1482,7 @@
                             }
                             html += `            </ul>\n          </li>\n        </ul>`;
                         }
-                        
+
                         if (modifiedCols.length > 0) {
                             html += `\n        <ul>\n          <li><strong>Modified Attributes</strong>\n            <ul>\n`;
                             for (const c of modifiedCols) {
@@ -1424,7 +1490,7 @@
                             }
                             html += `            </ul>\n          </li>\n        </ul>`;
                         }
-                        
+
                         if (existingCols.length > 0) {
                             html += `\n        <ul>\n          <li><strong>Existing Attributes</strong>\n            <ul>\n`;
                             for (const c of existingCols) {
@@ -1433,7 +1499,7 @@
                             html += `            </ul>\n          </li>\n        </ul>`;
                         }
                     }
-                    
+
                     html += `\n      </li>\n`;
                     html += `    </ul>\n`;
                     html += `  </li>\n`;
@@ -1555,9 +1621,9 @@
                 for (const asm of pluginAssemblies) {
                     const key = (asm.name || asm.displayName || "").toLowerCase();
                     const steps = stepsByAssembly.get(key) || [];
-                    
+
                     html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>`;
-                    
+
                     if (asm.componentStatus) {
                         const color = getStatusColor(asm.componentStatus);
                         html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(asm.componentStatus)}]</span>`;
@@ -1565,7 +1631,7 @@
                     if (asm.description) {
                         html += `\n    <ul><li>${ESC(asm.description)}</li></ul>`;
                     }
-                    
+
                     if (steps.length) {
                         html += `\n    <ul>\n`;
                         for (const s of steps) {
@@ -1575,7 +1641,7 @@
                     }
                     html += `\n  </li>\n`;
                 }
-                
+
                 // Unlinked Plugin Steps
                 if (unlinkedSteps.length > 0) {
                     html += `  <li><strong>Plugin Step</strong>\n`;
@@ -1817,7 +1883,7 @@
                     preview.innerHTML = html;
                     statusEl.textContent = `Generated HTML for ${componentData.length} component(s)`;
                     statusEl.className = 'small text-success';
-                    
+
                     // Enable copy and download buttons after successful generation
                     enableOutputButtons();
                 } catch (e) {
@@ -1831,9 +1897,9 @@
             document.getElementById("copyBtn").addEventListener("click", async () => {
                 const statusEl = document.getElementById("generateStatus");
                 const output = document.getElementById("output");
-                
+
                 const htmlContent = output.textContent || "";
-                
+
                 if (!htmlContent) {
                     statusEl.textContent = "Please generate HTML first!";
                     statusEl.className = 'small text-danger';
