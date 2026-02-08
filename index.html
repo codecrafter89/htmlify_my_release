@@ -745,14 +745,12 @@
                                     <th style="width: 40px;">
                                         <input type="checkbox" id="selectAll" class="form-check-input">
                                     </th>
-                                    <th>Component Type</th>
-                                    <th>Related Table/Entity</th>
-                                    <th>Display Name</th>
-                                    <th>Name</th>
+                                    <th contenteditable="false">Component Type</th>
+                                    <th contenteditable="false">Related Table/Entity</th>
+                                    <th contenteditable="false">Display Name</th>
+                                    <th contenteditable="false">Name</th>
                                     <th style="width: 150px;">Component Status</th>
                                     <th style="width: 250px;">Description</th>
-                                    <th>Last Modified By</th>
-                                    <th>Last Modified On</th>
                                 </tr>
                             </thead>
                             <tbody id="gridBody">
@@ -1221,19 +1219,19 @@
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" value="${ESC(row.componentType)}" 
-                            data-index="${index}" data-field="componentType">
+                            data-index="${index}" data-field="componentType" disabled>
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" value="${ESC(row.relatedTable)}" 
-                            data-index="${index}" data-field="relatedTable">
+                            data-index="${index}" data-field="relatedTable" disabled>
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" value="${ESC(row.displayName)}" 
-                            data-index="${index}" data-field="displayName">
+                            data-index="${index}" data-field="displayName" disabled>
                     </td>
                     <td>
                         <input type="text" class="form-control form-control-sm" value="${ESC(row.name)}" 
-                            data-index="${index}" data-field="name">
+                            data-index="${index}" data-field="name" disabled>
                     </td>
                     <td>
                         <select class="form-select form-select-sm status-select" data-index="${index}" data-field="componentStatus">
@@ -1247,8 +1245,7 @@
                         <textarea class="form-control form-control-sm" rows="1" 
                             data-index="${index}" data-field="description">${ESC(row.description)}</textarea>
                     </td>
-                    <td><small class="text-muted">${ESC(row.lastModifiedBy)}</small></td>
-                    <td><small class="text-muted">${ESC(row.lastModifiedOn)}</small></td>
+                    
                 `;
                 tbody.appendChild(tr);
             });
