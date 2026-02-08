@@ -108,6 +108,27 @@
             border-bottom: 2px solid #dee2e6;
             margin-bottom: 0.5rem;
         }
+
+        /* Status color coding */
+        .status-new {
+            color: #198754;
+            font-weight: 600;
+        }
+
+        .status-modified {
+            color: #ffc107;
+            font-weight: 600;
+        }
+
+        .status-existing {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+
+        .status-deprecated {
+            color: #dc3545;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -236,10 +257,10 @@
                         <button id="generateBtn" class="btn btn-success">
                             <i class="bi bi-filetype-html"></i> Generate HTML
                         </button>
-                        <button id="copyBtn" class="btn btn-outline-secondary">
+                        <button id="copyBtn" class="btn btn-outline-secondary" disabled style="display: none;">
                             <i class="bi bi-copy"></i> Copy HTML
                         </button>
-                        <button id="downloadBtn" class="btn btn-outline-primary">
+                        <button id="downloadBtn" class="btn btn-outline-primary" disabled style="display: none;">
                             <i class="bi bi-download"></i> Download HTML
                         </button>
                         <button id="backToEditBtn" class="btn btn-outline-secondary ms-auto">
@@ -630,6 +651,31 @@
             }
         }
 
+        // Clear preview and reset buttons
+        function clearPreview() {
+            document.getElementById('output').textContent = '';
+            document.getElementById('preview').innerHTML = '';
+            document.getElementById('generateStatus').textContent = '';
+            
+            // Disable and hide copy/download buttons
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            copyBtn.disabled = true;
+            copyBtn.style.display = 'none';
+            downloadBtn.disabled = true;
+            downloadBtn.style.display = 'none';
+        }
+
+        // Enable copy and download buttons after generation
+        function enableOutputButtons() {
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            copyBtn.disabled = false;
+            copyBtn.style.display = 'inline-block';
+            downloadBtn.disabled = false;
+            downloadBtn.style.display = 'inline-block';
+        }
+
         // Render grid
         function renderGrid() {
             const tbody = document.getElementById('gridBody');
@@ -658,7 +704,7 @@
                             data-index="${index}" data-field="name">
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" data-index="${index}" data-field="componentStatus">
+                        <select class="form-select form-select-sm status-select" data-index="${index}" data-field="componentStatus">
                             <option value="New" ${row.componentStatus === 'New' ? 'selected' : ''}>New</option>
                             <option value="Modified" ${row.componentStatus === 'Modified' ? 'selected' : ''}>Modified</option>
                             <option value="Existing" ${row.componentStatus === 'Existing' ? 'selected' : ''}>Existing</option>
@@ -684,11 +730,30 @@
                     const index = parseInt(e.target.dataset.index);
                     const field = e.target.dataset.field;
                     componentData[index][field] = e.target.value;
+                    
+                    // Update status color if status changed
+                    if (field === 'componentStatus') {
+                        applyStatusColor(e.target);
+                    }
                 });
+            });
+
+            // Apply status colors to all status selects
+            tbody.querySelectorAll('.status-select').forEach(select => {
+                applyStatusColor(select);
             });
         }
 
-        // Build HTML output
+        // Apply status color to select element
+        function applyStatusColor(selectElement) {
+            const status = selectElement.value.toLowerCase();
+            selectElement.className = 'form-select form-select-sm status-select';
+            if (status) {
+                selectElement.classList.add(`status-${status}`);
+            }
+        }
+
+        // Build HTML output - Word doc style with simple formatting
         function buildHTML(rows, solutionTitle) {
             const R = rows.map(r => ({
                 solutionUniqueName: (r.solutionUniqueName || "").trim(),
@@ -705,6 +770,16 @@
             const title = solutionTitle || (R.find(x => x.solutionUniqueName)?.solutionUniqueName) || "Solution";
             const label = (row) => (row.displayName || row.name || "").trim();
             const bucket = (t) => R.filter(r => r.componentType === t);
+
+            // Helper to get color for status
+            const getStatusColor = (status) => {
+                const s = status.toLowerCase();
+                if (s === 'new') return '#198754'; // Green
+                if (s === 'modified') return '#ffc107'; // Yellow/Amber
+                if (s === 'existing') return '#0d6efd'; // Blue
+                if (s === 'deprecated') return '#dc3545'; // Red
+                return '#000000'; // Default black
+            };
 
             // Group components
             const tableLike = R.filter(r => r.relatedTable && (r.componentType === "Table" || r.componentType === "Column"));
@@ -749,89 +824,124 @@
                 if (!linked) unlinkedSteps.push(step);
             }
 
-            // Build HTML
-            let html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>${ESC(title)}</title>\n`;
-            html += `<style>\n`;
-            html += `body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; overflow-wrap: break-word; }\n`;
-            html += `h1 { color: #198754; border-bottom: 3px solid #198754; padding-bottom: 10px; }\n`;
-            html += `h2 { color: #0d6efd; margin-top: 20px; }\n`;
-            html += `ul { list-style-type: none; padding-left: 0; }\n`;
-            html += `li { margin: 8px 0; }\n`;
-            html += `li > ul { padding-left: 20px; }\n`;
-            html += `.component-item { padding: 8px; border-left: 3px solid #dee2e6; margin: 5px 0; }\n`;
-            html += `.status-new { border-left-color: #198754; }\n`;
-            html += `.status-modified { border-left-color: #ffc107; }\n`;
-            html += `.status-existing { border-left-color: #0d6efd; }\n`;
-            html += `.status-deprecated { border-left-color: #dc3545; }\n`;
-            html += `.status-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; font-weight: bold; margin-left: 8px; }\n`;
-            html += `.badge-new { background-color: #d1e7dd; color: #0f5132; }\n`;
-            html += `.badge-modified { background-color: #fff3cd; color: #664d03; }\n`;
-            html += `.badge-existing { background-color: #cfe2ff; color: #084298; }\n`;
-            html += `.badge-deprecated { background-color: #f8d7da; color: #842029; }\n`;
-            html += `.description { color: #6c757d; font-size: 0.9em; margin-top: 4px; font-style: italic; }\n`;
-            html += `</style>\n`;
-            html += `</head>\n<body>\n`;
+            // Build HTML - Simple Word doc style
+            let html = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>${ESC(title)}</title>\n</head>\n<body>\n`;
 
-            html += `<h1>${ESC(title)}</h1>\n`;
-            html += `<h2>Release Components</h2>\n`;
+            html += `<p><strong>${ESC(title)}</strong></p>\n`;
+            html += `<p><strong>Release Components</strong></p>\n`;
             html += `<ul>\n`;
 
-            // Helper function to render component item
-            const renderComponent = (comp) => {
-                const statusClass = `status-${comp.componentStatus.toLowerCase()}`;
-                const badgeClass = `badge-${comp.componentStatus.toLowerCase()}`;
-                let item = `<li class="component-item ${statusClass}">\n`;
-                item += `  <strong>${ESC(label(comp))}</strong>\n`;
+            // Helper function to render component item with status and description
+            const renderComponent = (comp, prefix = "") => {
+                let item = `${prefix}${ESC(label(comp))}`;
+                
+                // Add status in brackets with color if present
                 if (comp.componentStatus) {
-                    item += `  <span class="status-badge ${badgeClass}">${ESC(comp.componentStatus)}</span>\n`;
+                    const color = getStatusColor(comp.componentStatus);
+                    item += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(comp.componentStatus)}]</span>`;
                 }
+                
+                let result = `<li>${item}`;
+                
+                // Add description on new line if present
                 if (comp.description) {
-                    item += `  <div class="description">${ESC(comp.description)}</div>\n`;
+                    result += `\n<ul><li>${ESC(comp.description)}</li></ul>`;
                 }
-                item += `</li>\n`;
-                return item;
+                
+                result += `</li>\n`;
+                return result;
             };
 
-            // Entity Components (Tables and Columns)
+            // Entity Components (Tables and Columns grouped by Related Table)
             if (entities.length > 0) {
                 for (const entity of entities) {
                     const entityRows = tableLike.filter(r => r.relatedTable === entity);
                     const tables = entityRows.filter(r => r.componentType === "Table");
                     const columns = entityRows.filter(r => r.componentType === "Column");
 
-                    html += `  <li><strong>Entity Component - ${ESC(entity)}</strong>\n`;
+                    html += `  <li><strong>Entity Component</strong>\n`;
                     html += `    <ul>\n`;
-
-                    if (tables.length) {
-                        for (const t of tables) {
-                            html += `      <li><strong>Table</strong>\n`;
-                            html += `        <ul>\n`;
-                            html += `          ${renderComponent(t)}`;
-                            if (columns.length) {
-                                html += `          <li><strong>Columns</strong>\n`;
-                                html += `            <ul>\n`;
-                                for (const c of columns) {
-                                    html += `              ${renderComponent(c)}`;
-                                }
-                                html += `            </ul>\n`;
-                                html += `          </li>\n`;
-                            }
-                            html += `        </ul>\n`;
-                            html += `      </li>\n`;
-                        }
-                    } else if (columns.length) {
-                        html += `      <li><strong>Columns</strong>\n`;
-                        html += `        <ul>\n`;
-                        for (const c of columns) {
-                            html += `          ${renderComponent(c)}`;
-                        }
-                        html += `        </ul>\n`;
-                        html += `      </li>\n`;
+                    html += `      <li><strong>Table - ${ESC(entity)}</strong>`;
+                    
+                    // Add table status if available
+                    if (tables.length > 0 && tables[0].componentStatus) {
+                        const color = getStatusColor(tables[0].componentStatus);
+                        html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(tables[0].componentStatus)}]</span>`;
                     }
-
+                    
+                    // Add table description if available
+                    if (tables.length > 0 && tables[0].description) {
+                        html += `\n        <ul><li>${ESC(tables[0].description)}</li></ul>`;
+                    }
+                    
+                    // New Attributes List
+                    if (columns.length > 0) {
+                        const newCols = columns.filter(c => c.componentStatus === "New");
+                        const modifiedCols = columns.filter(c => c.componentStatus === "Modified");
+                        const existingCols = columns.filter(c => c.componentStatus === "Existing");
+                        
+                        if (newCols.length > 0) {
+                            html += `\n        <ul>\n          <li><strong>New Attributes List</strong>\n            <ul>\n`;
+                            for (const c of newCols) {
+                                html += `              ${renderComponent(c)}`;
+                            }
+                            html += `            </ul>\n          </li>\n        </ul>`;
+                        }
+                        
+                        if (modifiedCols.length > 0) {
+                            html += `\n        <ul>\n          <li><strong>Modified Attributes</strong>\n            <ul>\n`;
+                            for (const c of modifiedCols) {
+                                html += `              ${renderComponent(c)}`;
+                            }
+                            html += `            </ul>\n          </li>\n        </ul>`;
+                        }
+                        
+                        if (existingCols.length > 0) {
+                            html += `\n        <ul>\n          <li><strong>Existing Attributes</strong>\n            <ul>\n`;
+                            for (const c of existingCols) {
+                                html += `              ${renderComponent(c)}`;
+                            }
+                            html += `            </ul>\n          </li>\n        </ul>`;
+                        }
+                    }
+                    
+                    html += `\n      </li>\n`;
                     html += `    </ul>\n`;
                     html += `  </li>\n`;
                 }
+            }
+
+            // Cloud Flows
+            if (cloudFlows.length > 0) {
+                html += `  <li><strong>Cloud Flow</strong>\n`;
+                html += `    <ul>\n`;
+                for (const f of cloudFlows) {
+                    html += `      ${renderComponent(f)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Canvas Apps
+            if (canvasApps.length > 0) {
+                html += `  <li><strong>Canvas App</strong>\n`;
+                html += `    <ul>\n`;
+                for (const c of canvasApps) {
+                    html += `      ${renderComponent(c)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
+            }
+
+            // Model-Driven Apps
+            if (modelDrivenApps.length > 0) {
+                html += `  <li><strong>Model-Driven App</strong>\n`;
+                html += `    <ul>\n`;
+                for (const m of modelDrivenApps) {
+                    html += `      ${renderComponent(m)}`;
+                }
+                html += `    </ul>\n`;
+                html += `  </li>\n`;
             }
 
             // Forms
@@ -869,7 +979,7 @@
 
             // Business Process Flows
             if (bpfs.length > 0) {
-                html += `  <li><strong>Business Process Flows</strong>\n`;
+                html += `  <li><strong>Business Process Flow</strong>\n`;
                 html += `    <ul>\n`;
                 for (const b of bpfs) {
                     html += `      ${renderComponent(b)}`;
@@ -878,42 +988,9 @@
                 html += `  </li>\n`;
             }
 
-            // Cloud Flows
-            if (cloudFlows.length > 0) {
-                html += `  <li><strong>Cloud Flows</strong>\n`;
-                html += `    <ul>\n`;
-                for (const f of cloudFlows) {
-                    html += `      ${renderComponent(f)}`;
-                }
-                html += `    </ul>\n`;
-                html += `  </li>\n`;
-            }
-
-            // Canvas Apps
-            if (canvasApps.length > 0) {
-                html += `  <li><strong>Canvas Apps</strong>\n`;
-                html += `    <ul>\n`;
-                for (const c of canvasApps) {
-                    html += `      ${renderComponent(c)}`;
-                }
-                html += `    </ul>\n`;
-                html += `  </li>\n`;
-            }
-
-            // Model-Driven Apps
-            if (modelDrivenApps.length > 0) {
-                html += `  <li><strong>Model-Driven Apps</strong>\n`;
-                html += `    <ul>\n`;
-                for (const m of modelDrivenApps) {
-                    html += `      ${renderComponent(m)}`;
-                }
-                html += `    </ul>\n`;
-                html += `  </li>\n`;
-            }
-
             // Dashboards
             if (dashboards.length > 0) {
-                html += `  <li><strong>Dashboards</strong>\n`;
+                html += `  <li><strong>Dashboard</strong>\n`;
                 html += `    <ul>\n`;
                 for (const d of dashboards) {
                     html += `      ${renderComponent(d)}`;
@@ -924,7 +1001,7 @@
 
             // Charts
             if (charts.length > 0) {
-                html += `  <li><strong>Charts</strong>\n`;
+                html += `  <li><strong>Chart</strong>\n`;
                 html += `    <ul>\n`;
                 for (const c of charts) {
                     html += `      ${renderComponent(c)}`;
@@ -935,7 +1012,7 @@
 
             // Sitemaps
             if (sitemaps.length > 0) {
-                html += `  <li><strong>Sitemaps</strong>\n`;
+                html += `  <li><strong>Sitemap</strong>\n`;
                 html += `    <ul>\n`;
                 for (const s of sitemaps) {
                     html += `      ${renderComponent(s)}`;
@@ -945,41 +1022,46 @@
             }
 
             // Plugin Assemblies with Steps
-            if (pluginAssemblies.length > 0) {
+            if (pluginAssemblies.length > 0 || unlinkedSteps.length > 0) {
                 for (const asm of pluginAssemblies) {
                     const key = (asm.name || asm.displayName || "").toLowerCase();
                     const steps = stepsByAssembly.get(key) || [];
-                    html += `  <li><strong>Plugin Assembly</strong>\n`;
-                    html += `    <ul>\n`;
-                    html += `      ${renderComponent(asm)}`;
+                    
+                    html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>`;
+                    
+                    if (asm.componentStatus) {
+                        const color = getStatusColor(asm.componentStatus);
+                        html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(asm.componentStatus)}]</span>`;
+                    }
+                    if (asm.description) {
+                        html += `\n    <ul><li>${ESC(asm.description)}</li></ul>`;
+                    }
+                    
                     if (steps.length) {
-                        html += `      <li><strong>Plugin Steps</strong>\n`;
-                        html += `        <ul>\n`;
+                        html += `\n    <ul>\n`;
                         for (const s of steps) {
-                            html += `          ${renderComponent(s)}`;
+                            html += `      ${renderComponent(s, "Plugin Step - ")}`;
                         }
-                        html += `        </ul>\n`;
-                        html += `      </li>\n`;
+                        html += `    </ul>`;
+                    }
+                    html += `\n  </li>\n`;
+                }
+                
+                // Unlinked Plugin Steps
+                if (unlinkedSteps.length > 0) {
+                    html += `  <li><strong>Plugin Step</strong>\n`;
+                    html += `    <ul>\n`;
+                    for (const s of unlinkedSteps) {
+                        html += `      ${renderComponent(s)}`;
                     }
                     html += `    </ul>\n`;
                     html += `  </li>\n`;
                 }
             }
 
-            // Unlinked Plugin Steps
-            if (unlinkedSteps.length > 0) {
-                html += `  <li><strong>Plugin Steps (Unlinked)</strong>\n`;
-                html += `    <ul>\n`;
-                for (const s of unlinkedSteps) {
-                    html += `      ${renderComponent(s)}`;
-                }
-                html += `    </ul>\n`;
-                html += `  </li>\n`;
-            }
-
             // Security Roles
             if (securityRoles.length > 0) {
-                html += `  <li><strong>Security Roles</strong>\n`;
+                html += `  <li><strong>Security Role</strong>\n`;
                 html += `    <ul>\n`;
                 for (const s of securityRoles) {
                     html += `      ${renderComponent(s)}`;
@@ -990,7 +1072,7 @@
 
             // Web Resources
             if (webResources.length > 0) {
-                html += `  <li><strong>Web Resources</strong>\n`;
+                html += `  <li><strong>Web Resource</strong>\n`;
                 html += `    <ul>\n`;
                 for (const w of webResources) {
                     html += `      ${renderComponent(w)}`;
@@ -1001,7 +1083,7 @@
 
             // Custom Controls
             if (customControls.length > 0) {
-                html += `  <li><strong>Custom Controls (PCF)</strong>\n`;
+                html += `  <li><strong>Custom Control</strong>\n`;
                 html += `    <ul>\n`;
                 for (const c of customControls) {
                     html += `      ${renderComponent(c)}`;
@@ -1012,7 +1094,7 @@
 
             // Environment Variables
             if (envVarDefs.length > 0) {
-                html += `  <li><strong>Environment Variable Definitions</strong>\n`;
+                html += `  <li><strong>Environment Variable Definition</strong>\n`;
                 html += `    <ul>\n`;
                 for (const e of envVarDefs) {
                     html += `      ${renderComponent(e)}`;
@@ -1023,7 +1105,7 @@
 
             // Connection References
             if (connections.length > 0) {
-                html += `  <li><strong>Connection References</strong>\n`;
+                html += `  <li><strong>Connection Reference</strong>\n`;
                 html += `    <ul>\n`;
                 for (const c of connections) {
                     html += `      ${renderComponent(c)}`;
@@ -1032,9 +1114,9 @@
                 html += `  </li>\n`;
             }
 
-            // Choices (Option Sets)
+            // Choices
             if (choices.length > 0) {
-                html += `  <li><strong>Choices (Option Sets)</strong>\n`;
+                html += `  <li><strong>Choice</strong>\n`;
                 html += `    <ul>\n`;
                 for (const c of choices) {
                     html += `      ${renderComponent(c)}`;
@@ -1045,7 +1127,7 @@
 
             // Email Templates
             if (emailTemplates.length > 0) {
-                html += `  <li><strong>Email Templates</strong>\n`;
+                html += `  <li><strong>Email Template</strong>\n`;
                 html += `    <ul>\n`;
                 for (const e of emailTemplates) {
                     html += `      ${renderComponent(e)}`;
@@ -1056,7 +1138,7 @@
 
             // Azure Functions
             if (azureFunctions.length > 0) {
-                html += `  <li><strong>Azure Functions</strong>\n`;
+                html += `  <li><strong>Azure Function</strong>\n`;
                 html += `    <ul>\n`;
                 for (const a of azureFunctions) {
                     html += `      ${renderComponent(a)}`;
@@ -1067,7 +1149,7 @@
 
             // Logic Apps
             if (logicApps.length > 0) {
-                html += `  <li><strong>Azure Logic Apps</strong>\n`;
+                html += `  <li><strong>Azure Logic App</strong>\n`;
                 html += `    <ul>\n`;
                 for (const l of logicApps) {
                     html += `      ${renderComponent(l)}`;
@@ -1078,7 +1160,7 @@
 
             // Other Azure Resources
             if (azureResources.length > 0) {
-                html += `  <li><strong>Azure Resources</strong>\n`;
+                html += `  <li><strong>Azure Resource</strong>\n`;
                 html += `    <ul>\n`;
                 for (const a of azureResources) {
                     html += `      ${renderComponent(a)}`;
@@ -1089,8 +1171,6 @@
 
             html += `</ul>\n`;
             html += `<p>&nbsp;</p>\n`;
-            html += `<hr>\n`;
-            html += `<p style="font-size: 0.9em; color: #6c757d;">Generated on ${new Date().toLocaleString()}</p>\n`;
             html += `</body>\n</html>`;
 
             return html;
@@ -1154,6 +1234,7 @@
 
             // Back to edit
             document.getElementById("backToEditBtn").addEventListener("click", () => {
+                clearPreview();
                 goToStep(2);
             });
 
@@ -1206,9 +1287,14 @@
                     output.textContent = html;
                     preview.innerHTML = html;
                     statusEl.textContent = `Generated HTML for ${componentData.length} component(s)`;
+                    statusEl.className = 'small text-success';
+                    
+                    // Enable copy and download buttons after successful generation
+                    enableOutputButtons();
                 } catch (e) {
                     console.error(e);
                     statusEl.textContent = `Error: ${e.message}`;
+                    statusEl.className = 'small text-danger';
                 }
             });
 
@@ -1216,12 +1302,22 @@
             document.getElementById("copyBtn").addEventListener("click", async () => {
                 const statusEl = document.getElementById("generateStatus");
                 const output = document.getElementById("output");
+                
+                const htmlContent = output.textContent || "";
+                
+                if (!htmlContent) {
+                    statusEl.textContent = "Please generate HTML first!";
+                    statusEl.className = 'small text-danger';
+                    return;
+                }
 
                 try {
-                    await navigator.clipboard.writeText(output.textContent || "");
+                    await navigator.clipboard.writeText(htmlContent);
                     statusEl.textContent = "HTML copied to clipboard!";
+                    statusEl.className = 'small text-success';
                 } catch (e) {
                     statusEl.textContent = "Failed to copy to clipboard.";
+                    statusEl.className = 'small text-danger';
                 }
             });
 
@@ -1232,7 +1328,8 @@
                 const text = output.textContent || "";
 
                 if (!text) {
-                    statusEl.textContent = "No HTML to download. Generate first.";
+                    statusEl.textContent = "Please generate HTML first!";
+                    statusEl.className = 'small text-danger';
                     return;
                 }
 
@@ -1246,6 +1343,7 @@
                 URL.revokeObjectURL(a.href);
                 a.remove();
                 statusEl.textContent = `Downloaded: ${filename}`;
+                statusEl.className = 'small text-success';
             });
         });
     </script>
