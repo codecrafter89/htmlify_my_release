@@ -50,13 +50,26 @@
             max-width: 1400px;
         }
 
-        /* Navbar */
+        /* Navbar with slide-down animation */
         .navbar {
             background: rgba(255, 255, 255, 0.8) !important;
             backdrop-filter: saturate(180%) blur(20px);
             border: none !important;
             box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
             padding: 1rem 2rem !important;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .navbar-brand {
@@ -64,34 +77,82 @@
             font-weight: 600 !important;
             font-size: 1.5rem !important;
             letter-spacing: -0.5px;
+            animation: fadeInScale 0.8s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .navbar-brand i {
             color: var(--primary-color);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         .btn-outline-success {
             border: 1.5px solid var(--primary-color);
             color: var(--primary-color);
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-outline-success::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: var(--primary-color);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            z-index: -1;
+        }
+
+        .btn-outline-success:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-outline-success:hover {
-            background: var(--primary-color);
             border-color: var(--primary-color);
             color: white;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
         }
 
-        /* Step Indicator */
+        /* Step Indicator with enhanced animations */
         .step-indicator {
             margin: 3rem 0;
             padding: 0;
             display: flex;
             justify-content: center;
             gap: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
         }
 
         .step {
@@ -100,6 +161,7 @@
             align-items: center;
             gap: 0.75rem;
             position: relative;
+            transition: all 0.3s ease;
         }
 
         .step::after {
@@ -111,6 +173,22 @@
             height: 2px;
             background: var(--border-color);
             z-index: -1;
+            transition: all 0.5s ease;
+        }
+
+        .step.completed::after {
+            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+            animation: progressLine 0.8s ease-out;
+        }
+
+        @keyframes progressLine {
+            from {
+                width: 0;
+            }
+
+            to {
+                width: 100%;
+            }
         }
 
         .step:last-child::after {
@@ -126,47 +204,111 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             font-size: 1.25rem;
             color: var(--text-secondary);
+            position: relative;
+        }
+
+        .step-number::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary-color);
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.4s ease;
         }
 
         .step.active .step-number {
             background: var(--primary-color);
             border-color: var(--primary-color);
             color: white;
-            transform: scale(1.1);
+            transform: scale(1.15);
+            box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+            animation: stepBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes stepBounce {
+
+            0%,
+            100% {
+                transform: scale(1.15);
+            }
+
+            50% {
+                transform: scale(1.25);
+            }
         }
 
         .step.completed .step-number {
             background: var(--success-color);
             border-color: var(--success-color);
             color: white;
+            animation: checkmarkPop 0.5s ease-out;
+        }
+
+        @keyframes checkmarkPop {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .step span {
             color: var(--text-secondary);
             font-weight: 500;
             font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
 
         .step.active span,
         .step.completed span {
             color: var(--text-primary);
             font-weight: 600;
+            transform: translateY(-2px);
         }
 
-        /* Cards */
+        /* Cards with enhanced hover effects */
         .card {
             background: white !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 1rem !important;
             box-shadow: var(--shadow);
-            transition: box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.05), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
         }
 
         .card:hover {
             box-shadow: var(--shadow-hover);
+            transform: translateY(-4px);
         }
 
         .card-header {
@@ -187,22 +329,60 @@
             font-weight: 600;
             font-size: 1.25rem;
             margin-bottom: 1.5rem;
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .card-title i {
             color: var(--primary-color);
+            animation: rotate 3s ease-in-out infinite;
         }
 
-        /* Form Controls */
+        @keyframes rotate {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(-5deg);
+            }
+
+            75% {
+                transform: rotate(5deg);
+            }
+        }
+
+        /* Form Controls with focus animations */
         .form-label {
             color: var(--text-primary);
             font-weight: 500;
             margin-bottom: 0.5rem;
             font-size: 0.95rem;
+            transition: all 0.3s ease;
         }
 
         .form-label i {
             color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus~.form-label i,
+        .form-select:focus~.form-label i {
+            color: var(--primary-color);
+            transform: scale(1.1);
         }
 
         .form-control,
@@ -212,7 +392,7 @@
             color: var(--text-primary) !important;
             border-radius: 0.75rem;
             padding: 0.75rem 1rem;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
         }
 
@@ -221,30 +401,59 @@
             border-color: var(--primary-color) !important;
             box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1) !important;
             outline: none;
+            transform: translateY(-2px);
         }
 
         .form-control::placeholder {
             color: var(--text-secondary);
+            transition: all 0.3s ease;
         }
 
-        /* Buttons */
+        .form-control:focus::placeholder {
+            opacity: 0.5;
+            transform: translateX(5px);
+        }
+
+        /* Buttons with ripple effect */
         .btn {
             border-radius: 0.75rem;
             padding: 0.75rem 1.5rem;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-success {
             background: var(--primary-color);
             color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
         }
 
         .btn-success:hover {
             background: #0051d5;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
         }
 
         .btn-outline-secondary {
@@ -256,6 +465,7 @@
         .btn-outline-secondary:hover {
             background: var(--bg-tertiary);
             border-color: var(--text-secondary);
+            transform: translateY(-2px);
         }
 
         .btn-outline-primary {
@@ -267,6 +477,7 @@
         .btn-outline-primary:hover {
             background: var(--primary-color);
             color: white;
+            transform: translateY(-2px);
         }
 
         .btn-outline-danger {
@@ -278,13 +489,19 @@
         .btn-outline-danger:hover {
             background: var(--danger-color);
             color: white;
+            transform: translateY(-2px);
         }
 
         .btn i {
             font-size: 1.1rem;
+            transition: transform 0.3s ease;
         }
 
-        /* Table */
+        .btn:hover i {
+            transform: scale(1.1);
+        }
+
+        /* Table with row animations */
         .editable-grid {
             max-height: 700px;
             overflow-y: auto;
@@ -306,6 +523,7 @@
         .editable-grid::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 6px;
+            transition: background 0.3s ease;
         }
 
         .editable-grid::-webkit-scrollbar-thumb:hover {
@@ -331,11 +549,46 @@
 
         .table tbody tr {
             border-bottom: 1px solid var(--border-color);
-            transition: background 0.15s ease;
+            transition: all 0.3s ease;
+            animation: fadeInRow 0.5s ease-out backwards;
+        }
+
+        .table tbody tr:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .table tbody tr:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .table tbody tr:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .table tbody tr:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .table tbody tr:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        @keyframes fadeInRow {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .table tbody tr:hover {
             background: var(--bg-tertiary);
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .table tbody td {
@@ -351,6 +604,13 @@
             border: 1px solid var(--border-color) !important;
             font-size: 0.9rem;
             padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .table .form-control:focus,
+        .table .form-select:focus,
+        .table textarea:focus {
+            transform: scale(1.02);
         }
 
         /* Grid Actions */
@@ -360,30 +620,47 @@
             border-bottom: 1px solid var(--border-color);
             border-radius: 0.75rem 0.75rem 0 0;
             margin-bottom: 0;
+            animation: slideInRight 0.5s ease-out;
         }
 
-        /* Status Colors */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Status Colors with glow */
         .status-new {
             color: var(--success-color);
             font-weight: 600;
+            text-shadow: 0 0 10px rgba(52, 199, 89, 0.3);
         }
 
         .status-modified {
             color: var(--warning-color);
             font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 149, 0, 0.3);
         }
 
         .status-existing {
             color: var(--primary-color);
             font-weight: 600;
+            text-shadow: 0 0 10px rgba(0, 122, 255, 0.3);
         }
 
         .status-deprecated {
             color: var(--danger-color);
             font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
         }
 
-        /* Preview and Output */
+        /* Preview and Output with typing animation */
         #preview,
         #output {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -392,6 +669,17 @@
             border: 1px solid var(--border-color);
             border-radius: 0.75rem;
             padding: 1.5rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         pre.code {
@@ -408,6 +696,7 @@
             border-top: 1px solid var(--border-color);
             color: var(--text-secondary);
             margin-top: 4rem;
+            animation: fadeInUp 1s ease-out 0.6s both;
         }
 
         /* Modal */
@@ -416,6 +705,19 @@
             border: 1px solid var(--border-color);
             border-radius: 1rem;
             color: var(--text-primary);
+            animation: modalSlideIn 0.4s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
@@ -452,6 +754,11 @@
             color: var(--text-primary);
             margin-bottom: 0.5rem;
             border-radius: 0.5rem !important;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .accordion-button {
@@ -459,6 +766,7 @@
             color: var(--text-primary);
             border: none;
             font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .accordion-button:not(.collapsed) {
@@ -479,6 +787,19 @@
         .accordion-body {
             background: white;
             color: var(--text-primary);
+            animation: expandDown 0.3s ease-out;
+        }
+
+        @keyframes expandDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
         }
 
         .accordion-body ul {
@@ -503,11 +824,33 @@
             border: 1px solid var(--primary-color);
             color: var(--text-primary);
             border-radius: 0.75rem;
+            animation: slideInLeft 0.5s ease-out;
         }
 
         /* Component Cards in Help Modal */
         .card.border-primary {
             border-color: var(--primary-color) !important;
+            animation: cardPopIn 0.4s ease-out backwards;
+        }
+
+        .card.border-primary:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .card.border-primary:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes cardPopIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .card.border-primary .card-header {
@@ -559,10 +902,28 @@
         /* Status text colors */
         .text-success {
             color: var(--success-color) !important;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .text-danger {
             color: var(--danger-color) !important;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
         }
 
         .text-muted {
@@ -579,11 +940,13 @@
             border: 1.5px solid var(--border-color);
             width: 1.25rem;
             height: 1.25rem;
+            transition: all 0.3s ease;
         }
 
         .form-check-input:checked {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            transform: scale(1.1);
         }
 
         .form-check-input:focus {
@@ -591,11 +954,11 @@
             border-color: var(--primary-color);
         }
 
-        /* Animations */
+        /* Main Animations */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
 
             to {
@@ -605,7 +968,26 @@
         }
 
         .step-section.active {
-            animation: fadeInUp 0.4s ease-out;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* Loading spinner for status messages */
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-left: 8px;
+            border: 2px solid var(--primary-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Small screens optimization */
@@ -645,6 +1027,40 @@
 
         .step-section.active {
             display: block;
+        }
+
+        /* Tooltip-like hints */
+        .hint-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            animation: bounceIn 0.6s ease-out;
+            cursor: help;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .hint-badge:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(88, 86, 214, 0.4);
         }
     </style>
 </head>
@@ -692,25 +1108,32 @@
                 <div class="card-body">
                     <h5 class="card-title">
                         <i class="bi bi-cloud-upload me-2"></i> Upload Excel File
+                        <span class="hint-badge">✨ Drag & drop works too!</span>
                     </h5>
-                    <div class="row g-3 align-items-end">
+                    <div class="row g-3 align-items">
                         <div class="col-md-6">
                             <label class="form-label">
                                 <i class="bi bi-file-earmark-excel me-1"></i> Excel File (.xlsx / .xls)
                             </label>
-                            <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
+                            <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls"
+                                placeholder="Choose your solution export file..." />
+                            <small class="text-muted">💡 Exported from XrmToolBox? Perfect!</small>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">
                                 <i class="bi bi-grid-3x3-gap me-1"></i> Solution Cell (optional)
                             </label>
                             <input type="text" id="solutionCell" class="form-control" value="B1"
-                                placeholder="e.g., B1" />
+                                placeholder="e.g., B1 or C2" />
+                            <small class="text-muted">📍 Where's your solution name?</small>
                         </div>
                         <div class="col-md-3 d-grid">
-                            <button id="loadBtn" class="btn btn-success">
+                            <label class="form-label">
+                            </label>
+                            <button id="loadBtn" class="btn btn-success btn-lg">
                                 <i class="bi bi-arrow-right-circle me-1"></i> Load File
                             </button>
+                            <small class="text-muted"></small>
                         </div>
                     </div>
                     <div class="mt-3">
@@ -726,6 +1149,7 @@
                 <div class="card-body">
                     <h5 class="card-title mb-4">
                         <i class="bi bi-grid-3x3-gap-fill me-2"></i> Edit Component Details
+                        <span class="hint-badge">🎨 Click any cell to edit</span>
                     </h5>
                     <div class="grid-actions">
                         <div class="d-flex gap-2 flex-wrap align-items-center">
@@ -778,6 +1202,7 @@
                 <div class="card-body">
                     <h5 class="card-title mb-4">
                         <i class="bi bi-file-earmark-code me-2"></i> Generate HTML Output
+                        <span class="hint-badge">🚀 Ready to ship!</span>
                     </h5>
                     <div class="d-flex gap-2 mb-3 flex-wrap">
                         <button id="generateBtn" class="btn btn-success">
@@ -805,6 +1230,7 @@
                     <div class="card shadow-sm border-0 rounded-3 h-100">
                         <div class="card-header py-3">
                             <i class="bi bi-eye me-2"></i> Rendered Preview
+                            <span class="hint-badge">👀 See it live</span>
                         </div>
                         <div class="card-body">
                             <div id="preview" style="min-height: 400px;"></div>
@@ -817,6 +1243,7 @@
                         <div class="card-header text-white py-3"
                             style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;">
                             <i class="bi bi-code-slash me-2"></i> Generated HTML (Raw)
+                            <span class="hint-badge" style="background: rgba(255, 255, 255, 0.2);">📋 Copy ready</span>
                         </div>
                         <div class="card-body">
                             <pre id="output" class="code" style="min-height: 350px;"></pre>
@@ -1309,7 +1736,7 @@
                     </td>
                     <td>
                         <textarea class="form-control form-control-sm" rows="3" 
-                            data-index="${index}" data-field="description">${ESC(row.description)}</textarea>
+                            data-index="${index}" data-field="description" placeholder="What changed? Why is this important? ✏️">${ESC(row.description)}</textarea>
                     </td>
                     
                 `;
@@ -1780,15 +2207,18 @@
 
                 if (!file) {
                     statusEl.textContent = "Please select an Excel file.";
+                    statusEl.className = 'small text-danger';
                     return;
                 }
 
                 if (!window.XLSX) {
                     statusEl.textContent = "SheetJS not loaded. Check CDN/network.";
+                    statusEl.className = 'small text-danger';
                     return;
                 }
 
                 statusEl.textContent = "Loading Excel file...";
+                statusEl.className = 'small loading';
 
                 try {
                     const data = await file.arrayBuffer();
@@ -1805,7 +2235,8 @@
                     // Parse rows
                     componentData = parseRows(ws, "DD/MM/YYYY HH:mm");
 
-                    statusEl.textContent = `Loaded ${componentData.length} component(s) from '${sheetName}'`;
+                    statusEl.textContent = `✅ Loaded ${componentData.length} component(s) from '${sheetName}'`;
+                    statusEl.className = 'small text-success';
 
                     // Render grid and move to step 2
                     renderGrid();
@@ -1813,7 +2244,8 @@
 
                 } catch (e) {
                     console.error(e);
-                    statusEl.textContent = `Error: ${e.message}`;
+                    statusEl.textContent = `❌ Error: ${e.message}`;
+                    statusEl.className = 'small text-danger';
                 }
             });
 
@@ -1877,18 +2309,21 @@
                 const output = document.getElementById("output");
                 const preview = document.getElementById("preview");
 
+                statusEl.textContent = "Generating HTML...";
+                statusEl.className = 'small loading';
+
                 try {
                     const html = buildHTML(componentData, solutionName);
                     output.textContent = html;
                     preview.innerHTML = html;
-                    statusEl.textContent = `Generated HTML for ${componentData.length} component(s)`;
+                    statusEl.textContent = `✅ Generated HTML for ${componentData.length} component(s)`;
                     statusEl.className = 'small text-success';
 
                     // Enable copy and download buttons after successful generation
                     enableOutputButtons();
                 } catch (e) {
                     console.error(e);
-                    statusEl.textContent = `Error: ${e.message}`;
+                    statusEl.textContent = `❌ Error: ${e.message}`;
                     statusEl.className = 'small text-danger';
                 }
             });
@@ -1901,17 +2336,17 @@
                 const htmlContent = output.textContent || "";
 
                 if (!htmlContent) {
-                    statusEl.textContent = "Please generate HTML first!";
+                    statusEl.textContent = "⚠️ Please generate HTML first!";
                     statusEl.className = 'small text-danger';
                     return;
                 }
 
                 try {
                     await navigator.clipboard.writeText(htmlContent);
-                    statusEl.textContent = "HTML copied to clipboard!";
+                    statusEl.textContent = "✅ HTML copied to clipboard!";
                     statusEl.className = 'small text-success';
                 } catch (e) {
-                    statusEl.textContent = "Failed to copy to clipboard.";
+                    statusEl.textContent = "❌ Failed to copy to clipboard.";
                     statusEl.className = 'small text-danger';
                 }
             });
@@ -1923,7 +2358,7 @@
                 const text = output.textContent || "";
 
                 if (!text) {
-                    statusEl.textContent = "Please generate HTML first!";
+                    statusEl.textContent = "⚠️ Please generate HTML first!";
                     statusEl.className = 'small text-danger';
                     return;
                 }
@@ -1937,7 +2372,7 @@
                 a.click();
                 URL.revokeObjectURL(a.href);
                 a.remove();
-                statusEl.textContent = `Downloaded: ${filename}`;
+                statusEl.textContent = `✅ Downloaded: ${filename}`;
                 statusEl.className = 'small text-success';
             });
         });
