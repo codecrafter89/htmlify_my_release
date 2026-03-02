@@ -39,7 +39,14 @@
             line-height: 1.6;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
+
+        /* Allow text selection inside grid inputs and textareas */
+        input, textarea, select { user-select: text !important; -webkit-user-select: text !important; }
 
         .container { max-width: 1400px; }
 
@@ -178,324 +185,718 @@
 
         .hint-badge { display: inline-block; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; margin-left: 0.5rem; cursor: help; }
         .hint-badge:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(88, 86, 214, 0.4); }
+
+        /* ── Login Overlay ── */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #loginBox {
+            background: white;
+            border-radius: 1.25rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+            text-align: center;
+        }
+        #loginBox .login-icon { font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem; }
+        #loginBox h4 { font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
+        #loginBox p.sub { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        #loginBox input { border-radius: 0.75rem; border: 1.5px solid var(--border-color); padding: 0.75rem 1rem; font-size: 1rem; width: 100%; margin-bottom: 1rem; outline: none; transition: border-color 0.3s; }
+        #loginBox input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); }
+        #loginBox button { width: 100%; background: var(--primary-color); color: white; border: none; border-radius: 0.75rem; padding: 0.85rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+        #loginBox button:hover { background: #0051d5; }
+        #loginErrorMsg { color: var(--danger-color); font-size: 0.85rem; margin-top: 0.5rem; display: none; }
+
+        /* ── User badge in navbar ── */
+        #userBadge { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 2rem; padding: 0.35rem 1rem; font-size: 0.9rem; font-weight: 500; color: var(--text-primary); }
+        #userBadge i { color: var(--primary-color); }
+
+        /* ── Admin Log Panel ── */
+        #adminLogBtn { display: none; }
+        .log-table { font-size: 0.82rem; }
+        .log-table th { background: var(--bg-tertiary); font-weight: 600; }
+        #logSearchInput { font-size: 0.9rem; }
+
+        /* DevTools warning overlay */
+        #devToolsWarning {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1d1d1f;
+            z-index: 999999;
+            align-items: center; justify-content: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+        #devToolsWarning.show { display: flex; }
+        #devToolsWarning i { font-size: 4rem; color: var(--danger-color); margin-bottom: 1.5rem; }
+        #devToolsWarning h2 { font-weight: 700; margin-bottom: 0.75rem; }
+        #devToolsWarning p { color: #a1a1a6; max-width: 400px; line-height: 1.7; }
     </style>
 </head>
 
 <body>
-    <div class="container pt-3">
-        <nav class="navbar navbar-light bg-white border rounded shadow-sm mb-4 py-3 px-4">
-            <b>
-                <span class="navbar-brand mb-0 d-flex align-items-center">
-                    <i class="bi bi-code-slash me-2" style="font-size: 1.8rem;"></i>
-                    HTMLify My Release Enhanced
-                </span>
-            </b>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN OVERLAY
+══════════════════════════════════════════════════════ -->
+<div id="loginOverlay">
+    <div id="loginBox">
+        <div class="login-icon"><i class="bi bi-person-badge"></i></div>
+        <h4>Welcome to HTMLify</h4>
+        <p class="sub">Please enter your name to continue. This is for access tracking.</p>
+        <input type="text" id="loginNameInput" placeholder="Your full name (e.g. John Smith)" autocomplete="off" maxlength="80" />
+        <div id="loginErrorMsg"><i class="bi bi-exclamation-circle me-1"></i> Name cannot be empty.</div>
+        <button id="loginSubmitBtn"><i class="bi bi-arrow-right-circle me-1"></i> Continue</button>
+        <p style="margin-top:1.25rem; font-size:0.78rem; color:var(--text-secondary);">Your name and access time will be logged for audit purposes.</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     DEVTOOLS WARNING OVERLAY
+══════════════════════════════════════════════════════ -->
+<div id="devToolsWarning">
+    <i class="bi bi-shield-exclamation"></i>
+    <h2>Access Restricted</h2>
+    <p>Developer tools are not permitted on this page. Please close developer tools to continue using the application.</p>
+</div>
+
+<div class="container pt-3">
+    <nav class="navbar navbar-light bg-white border rounded shadow-sm mb-4 py-3 px-4">
+        <b>
+            <span class="navbar-brand mb-0 d-flex align-items-center">
+                <i class="bi bi-code-slash me-2" style="font-size: 1.8rem;"></i>
+                HTMLify My Release Enhanced
+            </span>
+        </b>
+        <div class="d-flex align-items-center gap-2">
+            <span id="userBadge" style="display:none !important;"><i class="bi bi-person-circle"></i> <span id="userBadgeText"></span></span>
             <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#helpModal">
                 <i class="bi bi-question-circle me-1"></i> Help
             </button>
-        </nav>
+            <button id="adminLogBtn" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#adminLogModal" title="View access log">
+                <i class="bi bi-people me-1"></i> Access Log
+            </button>
+        </div>
+    </nav>
 
-        <div class="step-indicator">
-            <div class="step active" id="step1-indicator">
-                <div class="step-number"><i class="bi bi-upload"></i></div>
-                <span>Upload File</span>
+    <div class="step-indicator">
+        <div class="step active" id="step1-indicator">
+            <div class="step-number"><i class="bi bi-upload"></i></div>
+            <span>Upload File</span>
+        </div>
+        <div class="step" id="step2-indicator">
+            <div class="step-number"><i class="bi bi-pencil-square"></i></div>
+            <span>Edit Components</span>
+        </div>
+        <div class="step" id="step3-indicator">
+            <div class="step-number"><i class="bi bi-file-code"></i></div>
+            <span>Generate Output</span>
+        </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="step1" class="step-section active">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-cloud-upload me-2"></i> Upload Excel File
+                    <span class="hint-badge">✨ Drag & drop works too!</span>
+                </h5>
+                <div class="row g-3 align-items">
+                    <div class="col-md-6">
+                        <label class="form-label"><i class="bi bi-file-earmark-excel me-1"></i> Excel File (.xlsx / .xls)</label>
+                        <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
+                        <small class="text-muted">💡 Exported from XrmToolBox? Perfect!</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label"><i class="bi bi-grid-3x3-gap me-1"></i> Solution Cell (optional)</label>
+                        <input type="text" id="solutionCell" class="form-control" value="B1" placeholder="e.g., B1 or C2" />
+                        <small class="text-muted">📍 Where's your solution name?</small>
+                    </div>
+                    <div class="col-md-3 d-grid">
+                        <label class="form-label"></label>
+                        <button id="loadBtn" class="btn btn-success btn-lg">
+                            <i class="bi bi-arrow-right-circle me-1"></i> Load File
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3"><span id="loadStatus" class="small"></span></div>
             </div>
-            <div class="step" id="step2-indicator">
-                <div class="step-number"><i class="bi bi-pencil-square"></i></div>
-                <span>Edit Components</span>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step2" class="step-section">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i> Edit Component Details
+                    <span class="hint-badge">🎨 Click any cell to edit</span>
+                </h5>
+                <div class="grid-actions">
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button id="addRowBtn" class="btn btn-sm btn-outline-success"><i class="bi bi-plus-circle me-1"></i> Add Row</button>
+                        <button id="removeSelectedBtn" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i> Remove Selected</button>
+                        <div class="ms-auto"><span id="rowCount" class="small"></span></div>
+                    </div>
+                </div>
+                <div class="editable-grid">
+                    <table class="table table-bordered table-hover" id="componentGrid">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                                <th>Component Type</th>
+                                <th>Related Table/Entity</th>
+                                <th>Display Name</th>
+                                <th>Name</th>
+                                <th style="width: 200px;">Component Status</th>
+                                <th style="width: 350px;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gridBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button id="backToUploadBtn" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</button>
+                    <button id="proceedToGenerateBtn" class="btn btn-success ms-auto">Proceed to Generate <i class="bi bi-arrow-right-circle ms-1"></i></button>
+                </div>
             </div>
-            <div class="step" id="step3-indicator">
-                <div class="step-number"><i class="bi bi-file-code"></i></div>
-                <span>Generate Output</span>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="step3" class="step-section">
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="bi bi-file-earmark-code me-2"></i> Generate HTML Output
+                    <span class="hint-badge">🚀 Ready to ship!</span>
+                </h5>
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <button id="generateBtn" class="btn btn-success"><i class="bi bi-gear-fill me-1"></i> Generate HTML</button>
+                    <button id="copyBtn" class="btn btn-outline-warning" disabled style="display: none;"><i class="bi bi-clipboard me-1"></i> Copy HTML</button>
+                    <button id="downloadBtn" class="btn btn-outline-primary" disabled style="display: none;"><i class="bi bi-download me-1"></i> Download HTML</button>
+                    <button id="backToEditBtn" class="btn btn-outline-info ms-auto"><i class="bi bi-arrow-left me-1"></i> Back to Edit</button>
+                </div>
+                <div class="mb-3"><span id="generateStatus" class="small"></span></div>
             </div>
         </div>
 
-        <!-- Step 1 -->
-        <div id="step1" class="step-section active">
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-cloud-upload me-2"></i> Upload Excel File
-                        <span class="hint-badge">✨ Drag & drop works too!</span>
-                    </h5>
-                    <div class="row g-3 align-items">
-                        <div class="col-md-6">
-                            <label class="form-label"><i class="bi bi-file-earmark-excel me-1"></i> Excel File (.xlsx / .xls)</label>
-                            <input type="file" id="fileInput" class="form-control" accept=".xlsx,.xls" />
-                            <small class="text-muted">💡 Exported from XrmToolBox? Perfect!</small>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-grid-3x3-gap me-1"></i> Solution Cell (optional)</label>
-                            <input type="text" id="solutionCell" class="form-control" value="B1" placeholder="e.g., B1 or C2" />
-                            <small class="text-muted">📍 Where's your solution name?</small>
-                        </div>
-                        <div class="col-md-3 d-grid">
-                            <label class="form-label"></label>
-                            <button id="loadBtn" class="btn btn-success btn-lg">
-                                <i class="bi bi-arrow-right-circle me-1"></i> Load File
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                    <div class="card-header py-3"><i class="bi bi-eye me-2"></i> Rendered Preview <span class="hint-badge">👀 See it live</span></div>
+                    <div class="card-body"><div id="preview" style="min-height: 400px;"></div></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-3 h-100">
+                    <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;">
+                        <i class="bi bi-code-slash me-2"></i> Generated HTML (Raw)
+                        <span class="hint-badge" style="background: rgba(255,255,255,0.2);">📋 Copy ready</span>
+                    </div>
+                    <div class="card-body"><pre id="output" class="code" style="min-height: 350px;"></pre></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     HELP MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel"><i class="bi bi-info-circle me-2"></i> User Guide & Supported Components</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="text-success fw-bold mb-3"><i class="bi bi-list-check"></i> How to Use This Tool</h6>
+                <div class="accordion accordion-flush mb-4" id="guidelinesAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#solutionExtractionGuide">
+                                <i class="bi bi-1-circle-fill text-success me-2"></i> Step 1: Solution Component Extraction
                             </button>
+                        </h2>
+                        <div id="solutionExtractionGuide" class="accordion-collapse collapse show" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ul class="small">
+                                    <li><strong>Install Solution Component Extractor</strong> from XrmToolBox Tool Library</li>
+                                    <li class="mt-2"><strong>Search Using Solution Unique Name</strong> (not display name)</li>
+                                    <li class="mt-2"><strong>Export Components to Excel</strong> — do not modify sheet name or column structure</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-3"><span id="loadStatus" class="small"></span></div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1Guide">
+                                <i class="bi bi-2-circle-fill text-success me-2"></i> Step 2: Upload Excel File
+                            </button>
+                        </h2>
+                        <div id="step1Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ul class="small">
+                                    <li>Select an Excel file (.xlsx or .xls)</li>
+                                    <li>Headers expected: <code>Component Type</code>, <code>Display Name</code>, <code>Name</code>, <code>Related Table</code></li>
+                                    <li>Optionally specify cell containing solution name</li>
+                                    <li>Click <strong>Load File</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2Guide">
+                                <i class="bi bi-3-circle-fill text-success me-2"></i> Step 3: Edit Component Details
+                            </button>
+                        </h2>
+                        <div id="step2Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ul class="small">
+                                    <li>Review all loaded components in the editable grid</li>
+                                    <li><strong>Component Status:</strong> New, Modified, Existing, or Deprecated</li>
+                                    <li><strong>Description:</strong> Add notes explaining changes</li>
+                                    <li>Add/Remove rows as needed</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3Guide">
+                                <i class="bi bi-4-circle-fill text-success me-2"></i> Step 4: Generate HTML Output
+                            </button>
+                        </h2>
+                        <div id="step3Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ul class="small">
+                                    <li>Click <strong>Generate HTML</strong></li>
+                                    <li>View rendered preview or copy/download raw HTML</li>
+                                    <li>Status badges are color-coded (New=Green, Modified=Yellow, Existing=Blue, Deprecated=Red)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h6 class="text-success fw-bold mb-3"><i class="bi bi-box-seam"></i> Supported Components</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white py-2"><small class="fw-bold"><i class="bi bi-database"></i> Dynamics 365 / Dataverse (Entity-level)</small></div>
+                            <div class="card-body p-2">
+                                <ul class="small mb-0" style="font-size: 0.8rem;">
+                                    <li>Tables (Entities)</li>
+                                    <li>Columns / Fields / Attributes</li>
+                                    <li>Forms (Main, Quick Create, Quick View)</li>
+                                    <li>Views</li>
+                                    <li>Charts</li>
+                                    <li>Keys</li>
+                                    <li>Relationships (1:N, N:1, N:N)</li>
+                                    <li>Business Rules</li>
+                                    <li>Hierarchy Settings</li>
+                                    <li>Dashboards</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white py-2"><small class="fw-bold"><i class="bi bi-lightning-charge"></i> Power Platform & Global</small></div>
+                            <div class="card-body p-2">
+                                <ul class="small mb-0" style="font-size: 0.8rem;">
+                                    <li>Canvas Apps</li>
+                                    <li>Model-Driven Apps</li>
+                                    <li>Cloud Flows (Power Automate)</li>
+                                    <li>Connection References</li>
+                                    <li>Environment Variable Definitions</li>
+                                    <li>Custom Controls (PCF)</li>
+                                    <li>Business Process Flows</li>
+                                    <li>Option Sets / Choices (Global)</li>
+                                    <li>Security Roles</li>
+                                    <li>Sitemaps</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark py-2"><small class="fw-bold"><i class="bi bi-code-square"></i> Development</small></div>
+                            <div class="card-body p-2">
+                                <ul class="small mb-0" style="font-size: 0.8rem;">
+                                    <li>Plugin Assemblies</li>
+                                    <li>Plugin Steps (SDK Message Processing Steps)</li>
+                                    <li>Web Resources (HTML/CSS/JS)</li>
+                                    <li>Email Templates</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white py-2"><small class="fw-bold"><i class="bi bi-cloud"></i> Azure</small></div>
+                            <div class="card-body p-2">
+                                <ul class="small mb-0" style="font-size: 0.8rem;">
+                                    <li>Azure Functions</li>
+                                    <li>Azure Logic Apps</li>
+                                    <li>Other Azure Resources</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0" role="alert">
+                    <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Entity-level components (Forms, Views, Charts, Business Rules, Relationships, Keys, Columns, Hierarchy Settings) are grouped under their parent Table in the output.
                 </div>
             </div>
-        </div>
-
-        <!-- Step 2 -->
-        <div id="step2" class="step-section">
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
-                        <i class="bi bi-grid-3x3-gap-fill me-2"></i> Edit Component Details
-                        <span class="hint-badge">🎨 Click any cell to edit</span>
-                    </h5>
-                    <div class="grid-actions">
-                        <div class="d-flex gap-2 flex-wrap align-items-center">
-                            <button id="addRowBtn" class="btn btn-sm btn-outline-success"><i class="bi bi-plus-circle me-1"></i> Add Row</button>
-                            <button id="removeSelectedBtn" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i> Remove Selected</button>
-                            <div class="ms-auto"><span id="rowCount" class="small"></span></div>
-                        </div>
-                    </div>
-                    <div class="editable-grid">
-                        <table class="table table-bordered table-hover" id="componentGrid">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
-                                    <th>Component Type</th>
-                                    <th>Related Table/Entity</th>
-                                    <th>Display Name</th>
-                                    <th>Name</th>
-                                    <th style="width: 200px;">Component Status</th>
-                                    <th style="width: 350px;">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody id="gridBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="mt-4 d-flex gap-2">
-                        <button id="backToUploadBtn" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</button>
-                        <button id="proceedToGenerateBtn" class="btn btn-success ms-auto">Proceed to Generate <i class="bi bi-arrow-right-circle ms-1"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 3 -->
-        <div id="step3" class="step-section">
-            <div class="card border-0 shadow-sm rounded-3 mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-4">
-                        <i class="bi bi-file-earmark-code me-2"></i> Generate HTML Output
-                        <span class="hint-badge">🚀 Ready to ship!</span>
-                    </h5>
-                    <div class="d-flex gap-2 mb-3 flex-wrap">
-                        <button id="generateBtn" class="btn btn-success"><i class="bi bi-gear-fill me-1"></i> Generate HTML</button>
-                        <button id="copyBtn" class="btn btn-outline-warning" disabled style="display: none;"><i class="bi bi-clipboard me-1"></i> Copy HTML</button>
-                        <button id="downloadBtn" class="btn btn-outline-primary" disabled style="display: none;"><i class="bi bi-download me-1"></i> Download HTML</button>
-                        <button id="backToEditBtn" class="btn btn-outline-info ms-auto"><i class="bi bi-arrow-left me-1"></i> Back to Edit</button>
-                    </div>
-                    <div class="mb-3"><span id="generateStatus" class="small"></span></div>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div class="card-header py-3"><i class="bi bi-eye me-2"></i> Rendered Preview <span class="hint-badge">👀 See it live</span></div>
-                        <div class="card-body"><div id="preview" style="min-height: 400px;"></div></div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card shadow-sm border-0 rounded-3 h-100">
-                        <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;">
-                            <i class="bi bi-code-slash me-2"></i> Generated HTML (Raw)
-                            <span class="hint-badge" style="background: rgba(255,255,255,0.2);">📋 Copy ready</span>
-                        </div>
-                        <div class="card-body"><pre id="output" class="code" style="min-height: 350px;"></pre></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="helpModalLabel"><i class="bi bi-info-circle me-2"></i> User Guide & Supported Components</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h6 class="text-success fw-bold mb-3"><i class="bi bi-list-check"></i> How to Use This Tool</h6>
-                    <div class="accordion accordion-flush mb-4" id="guidelinesAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#solutionExtractionGuide">
-                                    <i class="bi bi-1-circle-fill text-success me-2"></i> Step 1: Solution Component Extraction
-                                </button>
-                            </h2>
-                            <div id="solutionExtractionGuide" class="accordion-collapse collapse show" data-bs-parent="#guidelinesAccordion">
-                                <div class="accordion-body">
-                                    <ul class="small">
-                                        <li><strong>Install Solution Component Extractor</strong> from XrmToolBox Tool Library</li>
-                                        <li class="mt-2"><strong>Search Using Solution Unique Name</strong> (not display name)</li>
-                                        <li class="mt-2"><strong>Export Components to Excel</strong> — do not modify sheet name or column structure</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#step1Guide">
-                                    <i class="bi bi-2-circle-fill text-success me-2"></i> Step 2: Upload Excel File
-                                </button>
-                            </h2>
-                            <div id="step1Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
-                                <div class="accordion-body">
-                                    <ul class="small">
-                                        <li>Select an Excel file (.xlsx or .xls)</li>
-                                        <li>Headers expected: <code>Component Type</code>, <code>Display Name</code>, <code>Name</code>, <code>Related Table</code></li>
-                                        <li>Optionally specify cell containing solution name</li>
-                                        <li>Click <strong>Load File</strong></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step2Guide">
-                                    <i class="bi bi-3-circle-fill text-success me-2"></i> Step 3: Edit Component Details
-                                </button>
-                            </h2>
-                            <div id="step2Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
-                                <div class="accordion-body">
-                                    <ul class="small">
-                                        <li>Review all loaded components in the editable grid</li>
-                                        <li><strong>Component Status:</strong> New, Modified, Existing, or Deprecated</li>
-                                        <li><strong>Description:</strong> Add notes explaining changes</li>
-                                        <li>Add/Remove rows as needed</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#step3Guide">
-                                    <i class="bi bi-4-circle-fill text-success me-2"></i> Step 4: Generate HTML Output
-                                </button>
-                            </h2>
-                            <div id="step3Guide" class="accordion-collapse collapse" data-bs-parent="#guidelinesAccordion">
-                                <div class="accordion-body">
-                                    <ul class="small">
-                                        <li>Click <strong>Generate HTML</strong></li>
-                                        <li>View rendered preview or copy/download raw HTML</li>
-                                        <li>Status badges are color-coded (New=Green, Modified=Yellow, Existing=Blue, Deprecated=Red)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <h6 class="text-success fw-bold mb-3"><i class="bi bi-box-seam"></i> Supported Components</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="card border-primary">
-                                <div class="card-header bg-primary text-white py-2"><small class="fw-bold"><i class="bi bi-database"></i> Dynamics 365 / Dataverse (Entity-level)</small></div>
-                                <div class="card-body p-2">
-                                    <ul class="small mb-0" style="font-size: 0.8rem;">
-                                        <li>Tables (Entities)</li>
-                                        <li>Columns / Fields / Attributes</li>
-                                        <li>Forms (Main, Quick Create, Quick View)</li>
-                                        <li>Views</li>
-                                        <li>Charts</li>
-                                        <li>Keys</li>
-                                        <li>Relationships (1:N, N:1, N:N)</li>
-                                        <li>Business Rules</li>
-                                        <li>Hierarchy Settings</li>
-                                        <li>Dashboards</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card border-success">
-                                <div class="card-header bg-success text-white py-2"><small class="fw-bold"><i class="bi bi-lightning-charge"></i> Power Platform & Global</small></div>
-                                <div class="card-body p-2">
-                                    <ul class="small mb-0" style="font-size: 0.8rem;">
-                                        <li>Canvas Apps</li>
-                                        <li>Model-Driven Apps</li>
-                                        <li>Cloud Flows (Power Automate)</li>
-                                        <li>Connection References</li>
-                                        <li>Environment Variable Definitions</li>
-                                        <li>Custom Controls (PCF)</li>
-                                        <li>Business Process Flows</li>
-                                        <li>Option Sets / Choices (Global)</li>
-                                        <li>Security Roles</li>
-                                        <li>Sitemaps</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card border-warning">
-                                <div class="card-header bg-warning text-dark py-2"><small class="fw-bold"><i class="bi bi-code-square"></i> Development</small></div>
-                                <div class="card-body p-2">
-                                    <ul class="small mb-0" style="font-size: 0.8rem;">
-                                        <li>Plugin Assemblies</li>
-                                        <li>Plugin Steps (SDK Message Processing Steps)</li>
-                                        <li>Web Resources (HTML/CSS/JS)</li>
-                                        <li>Email Templates</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card border-info">
-                                <div class="card-header bg-info text-white py-2"><small class="fw-bold"><i class="bi bi-cloud"></i> Azure</small></div>
-                                <div class="card-body p-2">
-                                    <ul class="small mb-0" style="font-size: 0.8rem;">
-                                        <li>Azure Functions</li>
-                                        <li>Azure Logic Apps</li>
-                                        <li>Other Azure Resources</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info mt-3 mb-0" role="alert">
-                        <i class="bi bi-lightbulb"></i> <strong>Tip:</strong> Entity-level components (Forms, Views, Charts, Business Rules, Relationships, Keys, Columns, Hierarchy Settings) are grouped under their parent Table in the output.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-success" data-bs-dismiss="modal">Got it!</button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Got it!</button>
             </div>
         </div>
     </div>
+</div>
 
-    <footer class="text-center mt-5 py-4">
-        <div class="container">
-            <p class="mb-1" style="font-size: 0.95rem; color: var(--text-primary);">Release Notes HTML Generator [Enhanced]</p>
-            <p class="mb-0 small">&copy; 2025 <strong>CodeCrafter.89</strong> &mdash; Making releases less painful.</p>
+<!-- ══════════════════════════════════════════════════════
+     ADMIN ACCESS LOG MODAL
+══════════════════════════════════════════════════════ -->
+<div class="modal fade" id="adminLogModal" tabindex="-1" aria-labelledby="adminLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adminLogModalLabel">
+                    <i class="bi bi-people-fill me-2"></i> User Access Log
+                    <span class="hint-badge">🔒 Admin only</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+                    <input type="text" id="logSearchInput" class="form-control" style="max-width: 280px;" placeholder="🔍 Search by name..." />
+                    <button id="exportLogBtn" class="btn btn-sm btn-outline-success ms-auto">
+                        <i class="bi bi-download me-1"></i> Export CSV
+                    </button>
+                    <button id="clearLogBtn" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i> Clear Log
+                    </button>
+                </div>
+                <div id="logStats" class="mb-3 d-flex gap-3 flex-wrap"></div>
+                <div style="max-height: 450px; overflow-y: auto; border-radius: 0.75rem; border: 1px solid var(--border-color);">
+                    <table class="table table-bordered log-table mb-0" id="logTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th><i class="bi bi-person me-1"></i>Name</th>
+                                <th><i class="bi bi-clock me-1"></i>Login Time</th>
+                                <th><i class="bi bi-globe me-1"></i>Browser</th>
+                                <th><i class="bi bi-display me-1"></i>Screen</th>
+                                <th><i class="bi bi-translate me-1"></i>Language</th>
+                                <th><i class="bi bi-clock-history me-1"></i>Session Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody"></tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Log is stored in this browser's local storage. Data persists across page reloads on this device.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    <script>
+<footer class="text-center mt-5 py-4">
+    <div class="container">
+        <p class="mb-1" style="font-size: 0.95rem; color: var(--text-primary);">Release Notes HTML Generator [Enhanced]</p>
+        <p class="mb-0 small">&copy; 2025 <strong>CodeCrafter.89</strong> &mdash; Making releases less painful.</p>
+    </div>
+</footer>
+
+<script>
+    // ══════════════════════════════════════════════════════════════════════════
+    // ── SECURITY: Block Right-Click & Common DevTools Keyboard Shortcuts ──
+    // ══════════════════════════════════════════════════════════════════════════
+    (function() {
+        // Block right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        }, true);
+
+        // Block keyboard shortcuts commonly used to open DevTools / view source
+        document.addEventListener('keydown', function(e) {
+            const key = e.key ? e.key.toUpperCase() : '';
+            const code = e.code || '';
+
+            // F12
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + Shift + I  (DevTools)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'I') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + Shift + J  (Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'J') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + Shift + C  (Inspect element)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'C') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + U  (View Source)
+            if ((e.ctrlKey || e.metaKey) && key === 'U') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + S  (Save page)
+            if ((e.ctrlKey || e.metaKey) && key === 'S') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + P  (Print - can reveal source)
+            if ((e.ctrlKey || e.metaKey) && key === 'P') { e.preventDefault(); return false; }
+
+            // Ctrl/Cmd + A  (Select all - block globally, allowed inside inputs)
+            // Don't block inside inputs/textareas
+            if ((e.ctrlKey || e.metaKey) && key === 'A') {
+                const tag = (document.activeElement || {}).tagName;
+                if (tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); return false; }
+            }
+        }, true);
+
+        // Block drag-start (prevents drag-to-URL trick)
+        document.addEventListener('dragstart', function(e) { e.preventDefault(); }, true);
+
+        // ── DevTools size-change detection ───────────────────────────────────
+        // When DevTools opens, the window inner dimensions shrink or the
+        // outer/inner difference grows. Poll every 1s.
+        const devToolsWarning = document.getElementById('devToolsWarning');
+        let devToolsOpen = false;
+
+        function checkDevTools() {
+            const threshold = 160;
+            const widthDiff  = window.outerWidth  - window.innerWidth;
+            const heightDiff = window.outerHeight - window.innerHeight;
+            const suspected  = widthDiff > threshold || heightDiff > threshold;
+
+            if (suspected && !devToolsOpen) {
+                devToolsOpen = true;
+                devToolsWarning.classList.add('show');
+            } else if (!suspected && devToolsOpen) {
+                devToolsOpen = false;
+                devToolsWarning.classList.remove('show');
+            }
+        }
+        setInterval(checkDevTools, 1000);
+
+        // Secondary debugger-based detection (pauses execution in DevTools)
+        // Disabled as it can be too aggressive — kept here as a comment reference:
+        // setInterval(function(){ const s=Date.now(); debugger; if(Date.now()-s>100){ /* devtools open */ } }, 500);
+    })();
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ── USER TRACKING / ACCESS LOG ─────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    const LOG_KEY    = '__htmlify_access_log__';
+    const ADMIN_PASS = 'admin123'; // ← Change this to your own admin secret!
+    let currentUser  = null;
+    let sessionStart = null;
+
+    function getLog() {
+        try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e) { return []; }
+    }
+
+    function saveLog(log) {
+        try { localStorage.setItem(LOG_KEY, JSON.stringify(log)); } catch(e) {}
+    }
+
+    function getBrowserInfo() {
+        const ua = navigator.userAgent;
+        let browser = 'Unknown';
+        if (ua.includes('Edg/'))    browser = 'Edge';
+        else if (ua.includes('OPR') || ua.includes('Opera')) browser = 'Opera';
+        else if (ua.includes('Chrome'))  browser = 'Chrome';
+        else if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Safari'))  browser = 'Safari';
+        return browser;
+    }
+
+    function logAccess(name) {
+        const log = getLog();
+        const entry = {
+            id:         Date.now(),
+            name:       name,
+            loginTime:  new Date().toISOString(),
+            browser:    getBrowserInfo(),
+            screen:     `${screen.width}x${screen.height}`,
+            language:   navigator.language || 'unknown',
+            sessionEnd: null
+        };
+        log.push(entry);
+        saveLog(log);
+        return entry;
+    }
+
+    function updateSessionEnd(entryId) {
+        const log = getLog();
+        const entry = log.find(e => e.id === entryId);
+        if (entry) {
+            entry.sessionEnd = new Date().toISOString();
+            saveLog(log);
+        }
+    }
+
+    function formatTime(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function calcDuration(start, end) {
+        if (!end) return '<span class="text-success fw-bold">● Active now</span>';
+        const ms  = new Date(end) - new Date(start);
+        const min = Math.floor(ms / 60000);
+        const sec = Math.floor((ms % 60000) / 1000);
+        return `${min}m ${sec}s`;
+    }
+
+    function renderLogTable(filterText) {
+        const log = getLog().slice().reverse(); // newest first
+        const tbody = document.getElementById('logTableBody');
+        const filtered = filterText
+            ? log.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
+            : log;
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>No records found.</td></tr>`;
+        } else {
+            tbody.innerHTML = filtered.map((e, i) => `
+                <tr>
+                    <td class="text-muted">${filtered.length - i}</td>
+                    <td><strong><i class="bi bi-person-circle me-1"></i>${escHTML(e.name)}</strong></td>
+                    <td>${formatTime(e.loginTime)}</td>
+                    <td><i class="bi bi-browser-chrome me-1"></i>${escHTML(e.browser)}</td>
+                    <td><small>${escHTML(e.screen)}</small></td>
+                    <td><small>${escHTML(e.language)}</small></td>
+                    <td>${calcDuration(e.loginTime, e.sessionEnd)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Stats
+        const total = log.length;
+        const unique = new Set(log.map(e => e.name.toLowerCase().trim())).size;
+        const today  = log.filter(e => new Date(e.loginTime).toDateString() === new Date().toDateString()).length;
+        document.getElementById('logStats').innerHTML = `
+            <span class="badge rounded-pill" style="background:#e8f5e9;color:#2e7d32;font-size:0.85rem;padding:0.5rem 1rem;">
+                <i class="bi bi-people me-1"></i> Total Sessions: <strong>${total}</strong>
+            </span>
+            <span class="badge rounded-pill" style="background:#e3f2fd;color:#1565c0;font-size:0.85rem;padding:0.5rem 1rem;">
+                <i class="bi bi-person-check me-1"></i> Unique Users: <strong>${unique}</strong>
+            </span>
+            <span class="badge rounded-pill" style="background:#fff3e0;color:#e65100;font-size:0.85rem;padding:0.5rem 1rem;">
+                <i class="bi bi-calendar-day me-1"></i> Today: <strong>${today}</strong>
+            </span>
+        `;
+    }
+
+    function escHTML(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function exportLogCSV() {
+        const log = getLog();
+        const headers = ['#','Name','Login Time','Browser','Screen','Language','Session Duration'];
+        const rows = log.map((e, i) => [
+            i + 1,
+            e.name,
+            formatTime(e.loginTime),
+            e.browser,
+            e.screen,
+            e.language,
+            e.sessionEnd ? calcDuration(e.loginTime, e.sessionEnd).replace(/<[^>]+>/g,'') : 'Active'
+        ]);
+        const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `HTMLify_AccessLog_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(a.href);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ── LOGIN FLOW ────────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    function doLogin(name) {
+        currentUser  = name.trim();
+        sessionStart = Date.now();
+        const entry  = logAccess(currentUser);
+
+        // Update session end on page unload
+        window.addEventListener('beforeunload', () => updateSessionEnd(entry.id));
+
+        // Hide overlay, show user badge
+        document.getElementById('loginOverlay').style.display = 'none';
+        const badge = document.getElementById('userBadge');
+        badge.style.cssText = ''; // remove the display:none !important
+        document.getElementById('userBadgeText').textContent = currentUser;
+
+        // Show admin log button if name matches admin passphrase
+        // (You can also use a real password prompt here)
+        if (currentUser.toLowerCase() === 'admin' || currentUser.toLowerCase().includes('codecrafter')) {
+            document.getElementById('adminLogBtn').style.display = 'inline-block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // ── Login handlers ──
+        const loginInput  = document.getElementById('loginNameInput');
+        const loginBtn    = document.getElementById('loginSubmitBtn');
+        const loginErr    = document.getElementById('loginErrorMsg');
+
+        function tryLogin() {
+            const val = loginInput.value.trim();
+            if (!val) { loginErr.style.display = 'block'; loginInput.focus(); return; }
+            loginErr.style.display = 'none';
+            doLogin(val);
+        }
+
+        loginBtn.addEventListener('click', tryLogin);
+        loginInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+        setTimeout(() => loginInput.focus(), 400);
+
+        // ── Admin log modal events ──
+        document.getElementById('adminLogModal').addEventListener('show.bs.modal', () => renderLogTable(''));
+        document.getElementById('logSearchInput').addEventListener('input', (e) => renderLogTable(e.target.value));
+        document.getElementById('exportLogBtn').addEventListener('click', exportLogCSV);
+        document.getElementById('clearLogBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the entire access log? This cannot be undone.')) {
+                localStorage.removeItem(LOG_KEY);
+                renderLogTable('');
+            }
+        });
+
+        // ══════════════════════════════════════════════════════════════════
+        // ── ORIGINAL APP LOGIC (unchanged) ────────────────────────────────
+        // ══════════════════════════════════════════════════════════════════
         let componentData = [];
-        let solutionName = "";
+        let solutionName  = "";
 
         const ESC = (s) => String(s ?? "")
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
         const norm = (s) => String(s ?? "").trim();
 
-        // ─────────────────────────────────────────────────────────────────────────
-        // ENTITY-LEVEL component types (grouped under their Related Table/Entity)
-        // ─────────────────────────────────────────────────────────────────────────
         const ENTITY_LEVEL_TYPES = new Set([
             "Table", "Column", "Form", "Main Form", "Quick Create Form", "Quick View Form",
             "View", "Chart", "Key", "Relationship", "Business Rule",
@@ -505,7 +906,6 @@
         function normalizeType(s) {
             const t = String(s || "").trim().toLowerCase();
             const patterns = [
-                // ── Entity-level ──────────────────────────────────────────────
                 { name: "Table",                    test: v => v === "table" || v === "entity" },
                 { name: "Column",                   test: v => v === "column" || v === "field" || v === "attribute" },
                 { name: "Main Form",                test: v => v === "main form" || v === "mainform" },
@@ -519,7 +919,6 @@
                 { name: "Business Rule",            test: v => v === "business rule" || v.includes("businessrule") },
                 { name: "Hierarchy Setting",        test: v => v.includes("hierarchy") },
                 { name: "Dashboard (Entity)",       test: v => v === "dashboard (entity)" },
-                // ── Global / App-level ─────────────────────────────────────────
                 { name: "Canvas App",               test: v => v === "canvas app" || v.includes("canvas") },
                 { name: "Cloud Flow",               test: v => v === "cloud flow" || v === "flow" || v.includes("power automate") },
                 { name: "Custom Control",           test: v => v === "custom control" || v.includes("pcf") },
@@ -539,26 +938,18 @@
                 { name: "Azure Logic App",          test: v => v.includes("logic app") },
                 { name: "Azure Resource",           test: v => v.includes("azure") && !v.includes("function") && !v.includes("logic") },
             ];
-
             const hit = patterns.find(p => p.test(t));
-            return hit ? hit.name : s; // return original if no match (instead of dropping it)
+            return hit ? hit.name : s;
         }
 
-        function getCell(ws, addr) {
-            const cell = ws[addr];
-            if (!cell) return "";
-            return String(cell.v ?? cell.w ?? "");
-        }
-
+        function getCell(ws, addr) { const cell = ws[addr]; if (!cell) return ""; return String(cell.v ?? cell.w ?? ""); }
         function pad(n) { return String(n).padStart(2, "0"); }
-
         function customDateFormat(d, fmt = "DD/MM/YYYY HH:mm") {
             const DD = pad(d.getDate()), MM = pad(d.getMonth() + 1), YYYY = d.getFullYear();
             const HH = pad(d.getHours()), mm = pad(d.getMinutes()), ss = pad(d.getSeconds());
             return fmt.replace("DD", DD).replace("MM", MM).replace("YYYY", YYYY)
                 .replace("HH", HH).replace("mm", mm).replace("ss", ss);
         }
-
         function formatDate(v, fmt = "DD/MM/YYYY HH:mm") {
             if (!v) return "";
             try {
@@ -574,7 +965,6 @@
         }
 
         const fuzz = (s) => String(s || "").replace(/^\uFEFF/, "").toLowerCase().replace(/[\s\-_]+/g, " ").trim();
-
         const HEADER_ALIASES = {
             "solution unique name": ["solution unique name", "solutionuniquename", "solution name", "solution"],
             "related table":        ["related table", "related entity", "entity", "table name", "table"],
@@ -614,11 +1004,7 @@
             return map;
         }
 
-        function pick(arr, idx) {
-            if (idx == null || idx < 0 || idx >= arr.length) return "";
-            const v = arr[idx];
-            return v == null ? "" : String(v);
-        }
+        function pick(arr, idx) { if (idx == null || idx < 0 || idx >= arr.length) return ""; const v = arr[idx]; return v == null ? "" : String(v); }
 
         function parseRows(sheet, dateFormat) {
             const { headerRowIndex, rows } = detectHeaderRow(sheet);
@@ -627,7 +1013,6 @@
             const headerMap = buildHeaderMap(headerRow);
             const idxOf = (name) => headerMap[name];
             const dataRows = rows.slice(headerRowIndex + 1);
-
             return dataRows
                 .filter(r => r && r.some(cell => String(cell || "").trim() !== ""))
                 .map(r => ({
@@ -644,7 +1029,6 @@
                 }));
         }
 
-        // Step navigation
         function goToStep(n) {
             document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.step').forEach(s => { s.classList.remove('active', 'completed'); });
@@ -693,9 +1077,7 @@
                 `;
                 tbody.appendChild(tr);
             });
-
             document.getElementById('rowCount').textContent = `${componentData.length} component(s)`;
-
             tbody.querySelectorAll('input, select, textarea').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const index = parseInt(e.target.dataset.index);
@@ -713,9 +1095,6 @@
             if (status) selectElement.classList.add(`status-${status}`);
         }
 
-        // ─────────────────────────────────────────────────────────────────────────
-        // HTML BUILDER
-        // ─────────────────────────────────────────────────────────────────────────
         function buildHTML(rows, solutionTitle) {
             const R = rows.map(r => ({
                 solutionUniqueName: (r.solutionUniqueName || "").trim(),
@@ -742,7 +1121,6 @@
                 return '#555555';
             };
 
-            // Helper: render a single component <li>
             const renderComponent = (comp, prefixLabel = "") => {
                 const lbl = prefixLabel ? `${prefixLabel}${ESC(label(comp))}` : ESC(label(comp));
                 let result = `<li>${lbl}`;
@@ -750,48 +1128,34 @@
                     const color = getStatusColor(comp.componentStatus);
                     result += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(comp.componentStatus)}]</span>`;
                 }
-                if (comp.description) {
-                    result += `\n<ul><li>${ESC(comp.description)}</li></ul>`;
-                }
+                if (comp.description) result += `\n<ul><li>${ESC(comp.description)}</li></ul>`;
                 result += `</li>\n`;
                 return result;
             };
 
-            // Helper: render a sub-group of entity-level items
             const renderSubGroup = (groupLabel, items, indent = "          ") => {
                 if (!items.length) return "";
                 let html = `${indent}<li><strong>${groupLabel}</strong>\n${indent}  <ul>\n`;
-                for (const item of items) {
-                    html += `${indent}    ${renderComponent(item)}`;
-                }
+                for (const item of items) html += `${indent}    ${renderComponent(item)}`;
                 html += `${indent}  </ul>\n${indent}</li>\n`;
                 return html;
             };
-
-            // ── Determine which rows are entity-level vs global ───────────────
-            // A row is "entity-level" when its componentType belongs to ENTITY_LEVEL_TYPES
-            // AND it has a relatedTable value (for Types that always go under an entity)
-            // Business Rules, Forms, Views, Charts, Keys, Relationships, Hierarchy Settings
-            // are all entity-scoped even if relatedTable happens to be blank in the sheet.
 
             const ALWAYS_ENTITY_TYPES = new Set([
                 "Column", "Form", "Main Form", "Quick Create Form", "Quick View Form",
                 "View", "Chart", "Key", "Relationship", "Business Rule", "Hierarchy Setting", "Dashboard (Entity)"
             ]);
 
-            // Rows explicitly attached to a Table (relatedTable set)
             const entityLevelRows = R.filter(r =>
                 ALWAYS_ENTITY_TYPES.has(r.componentType) ||
                 (r.componentType === "Table" && r.relatedTable)
             );
 
-            // All distinct entities referenced
             const allEntityNames = Array.from(new Set([
                 ...R.filter(r => r.componentType === "Table").map(r => r.relatedTable || r.displayName || r.name),
                 ...entityLevelRows.filter(r => r.relatedTable).map(r => r.relatedTable)
             ])).filter(Boolean);
 
-            // Global-scope buckets
             const canvasApps       = bucket("Canvas App");
             const cloudFlows       = bucket("Cloud Flow");
             const customControls   = bucket("Custom Control");
@@ -804,7 +1168,6 @@
             const emailTemplates   = bucket("Email Template");
             const bpfs             = bucket("Business Process Flow");
             const dashboards       = bucket("Dashboard");
-            const charts_global    = bucket("Chart").filter(r => !r.relatedTable); // global charts without entity
             const sitemaps         = bucket("Sitemap");
             const connections      = bucket("Connection Reference");
             const choices          = bucket("Choice");
@@ -812,7 +1175,6 @@
             const logicApps        = bucket("Azure Logic App");
             const azureResources   = bucket("Azure Resource");
 
-            // Link Plugin Steps to Assemblies
             const stepsByAssembly = new Map();
             for (const asm of pluginAssemblies) {
                 stepsByAssembly.set((asm.name || asm.displayName || "").toLowerCase(), []);
@@ -827,29 +1189,16 @@
                 if (!linked) unlinkedSteps.push(step);
             }
 
-            // ── Build output ──────────────────────────────────────────────────
             let html = `<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<title>${ESC(title)}</title>\n</head>\n<body>\n`;
-            html += `<p><strong>${ESC(title)}</strong></p>\n`;
-            html += `<p><strong>Release Components</strong></p>\n`;
-            html += `<ul>\n`;
+            html += `<p><strong>${ESC(title)}</strong></p>\n<p><strong>Release Components</strong></p>\n<ul>\n`;
 
-            // ── 1. Entity Components ──────────────────────────────────────────
             if (allEntityNames.length > 0) {
                 for (const entity of allEntityNames) {
-                    // Find the Table row for this entity (by relatedTable or by name)
                     const tableRow = R.find(r => r.componentType === "Table" &&
                         (r.relatedTable === entity || r.displayName === entity || r.name === entity));
-
-                    // All entity-scoped rows for this entity
                     const byEntity = (type) => R.filter(r => r.componentType === type && r.relatedTable === entity);
-                    const byEntityLoose = (type) => R.filter(r => r.componentType === type &&
-                        (r.relatedTable === entity || (!r.relatedTable && r.displayName === entity)));
-
                     const columns         = byEntity("Column");
-                    const forms           = [
-                        ...byEntity("Form"), ...byEntity("Main Form"),
-                        ...byEntity("Quick Create Form"), ...byEntity("Quick View Form")
-                    ];
+                    const forms           = [...byEntity("Form"), ...byEntity("Main Form"), ...byEntity("Quick Create Form"), ...byEntity("Quick View Form")];
                     const views           = byEntity("View");
                     const entityCharts    = byEntity("Chart");
                     const keys            = byEntity("Key");
@@ -858,27 +1207,20 @@
                     const hierarchySettings = byEntity("Hierarchy Setting");
                     const entityDashboards  = byEntity("Dashboard (Entity)");
 
-                    html += `  <li><strong>Entity Component</strong>\n`;
-                    html += `    <ul>\n`;
-
-                    // Table header line
+                    html += `  <li><strong>Entity Component</strong>\n    <ul>\n`;
                     html += `      <li><strong>Table - ${ESC(entity)}</strong>`;
                     if (tableRow?.componentStatus) {
                         const color = getStatusColor(tableRow.componentStatus);
                         html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(tableRow.componentStatus)}]</span>`;
                     }
-                    if (tableRow?.description) {
-                        html += `\n        <ul><li>${ESC(tableRow.description)}</li></ul>`;
-                    }
+                    if (tableRow?.description) html += `\n        <ul><li>${ESC(tableRow.description)}</li></ul>`;
 
-                    // ── Columns (grouped by status) ───────────────────────────
                     if (columns.length > 0) {
-                        const newCols      = columns.filter(c => c.componentStatus === "New");
+                        const newCols = columns.filter(c => c.componentStatus === "New");
                         const modifiedCols = columns.filter(c => c.componentStatus === "Modified");
                         const existingCols = columns.filter(c => c.componentStatus === "Existing");
                         const deprecatedCols = columns.filter(c => c.componentStatus === "Deprecated");
-                        const otherCols    = columns.filter(c => !["New","Modified","Existing","Deprecated"].includes(c.componentStatus));
-
+                        const otherCols = columns.filter(c => !["New","Modified","Existing","Deprecated"].includes(c.componentStatus));
                         html += `\n        <ul>\n`;
                         if (newCols.length)       html += renderSubGroup("New Attributes List", newCols, "          ");
                         if (modifiedCols.length)  html += renderSubGroup("Modified Attributes", modifiedCols, "          ");
@@ -887,307 +1229,148 @@
                         if (otherCols.length)     html += renderSubGroup("Attributes", otherCols, "          ");
                         html += `        </ul>`;
                     }
+                    if (forms.length > 0)            { html += `\n        <ul>\n`; html += renderSubGroup("Forms", forms, "          "); html += `        </ul>`; }
+                    if (views.length > 0)            { html += `\n        <ul>\n`; html += renderSubGroup("Views", views, "          "); html += `        </ul>`; }
+                    if (entityCharts.length > 0)     { html += `\n        <ul>\n`; html += renderSubGroup("Charts", entityCharts, "          "); html += `        </ul>`; }
+                    if (businessRules.length > 0)    { html += `\n        <ul>\n`; html += renderSubGroup("Business Rules", businessRules, "          "); html += `        </ul>`; }
+                    if (keys.length > 0)             { html += `\n        <ul>\n`; html += renderSubGroup("Keys", keys, "          "); html += `        </ul>`; }
+                    if (relationships.length > 0)    { html += `\n        <ul>\n`; html += renderSubGroup("Relationships", relationships, "          "); html += `        </ul>`; }
+                    if (hierarchySettings.length > 0){ html += `\n        <ul>\n`; html += renderSubGroup("Hierarchy Settings", hierarchySettings, "          "); html += `        </ul>`; }
+                    if (entityDashboards.length > 0) { html += `\n        <ul>\n`; html += renderSubGroup("Dashboards", entityDashboards, "          "); html += `        </ul>`; }
 
-                    // ── Forms ─────────────────────────────────────────────────
-                    if (forms.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Forms", forms, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Views ─────────────────────────────────────────────────
-                    if (views.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Views", views, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Charts ────────────────────────────────────────────────
-                    if (entityCharts.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Charts", entityCharts, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Business Rules ────────────────────────────────────────
-                    if (businessRules.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Business Rules", businessRules, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Keys ──────────────────────────────────────────────────
-                    if (keys.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Keys", keys, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Relationships ─────────────────────────────────────────
-                    if (relationships.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Relationships", relationships, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Hierarchy Settings ────────────────────────────────────
-                    if (hierarchySettings.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Hierarchy Settings", hierarchySettings, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    // ── Entity Dashboards ─────────────────────────────────────
-                    if (entityDashboards.length > 0) {
-                        html += `\n        <ul>\n`;
-                        html += renderSubGroup("Dashboards", entityDashboards, "          ");
-                        html += `        </ul>`;
-                    }
-
-                    html += `\n      </li>\n`;
-                    html += `    </ul>\n`;
-                    html += `  </li>\n`;
+                    html += `\n      </li>\n    </ul>\n  </li>\n`;
                 }
             }
 
-            // ── 2. Cloud Flows ────────────────────────────────────────────────
-            if (cloudFlows.length > 0) {
-                html += `  <li><strong>Cloud Flow</strong>\n    <ul>\n`;
-                for (const f of cloudFlows) html += `      ${renderComponent(f)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
+            if (cloudFlows.length > 0)      { html += `  <li><strong>Cloud Flow</strong>\n    <ul>\n`; for (const f of cloudFlows) html += `      ${renderComponent(f)}`; html += `    </ul>\n  </li>\n`; }
+            if (canvasApps.length > 0)      { html += `  <li><strong>Canvas App</strong>\n    <ul>\n`; for (const c of canvasApps) html += `      ${renderComponent(c)}`; html += `    </ul>\n  </li>\n`; }
+            if (modelDrivenApps.length > 0) { html += `  <li><strong>Model-Driven App</strong>\n    <ul>\n`; for (const m of modelDrivenApps) html += `      ${renderComponent(m)}`; html += `    </ul>\n  </li>\n`; }
+            if (bpfs.length > 0)            { html += `  <li><strong>Business Process Flow</strong>\n    <ul>\n`; for (const b of bpfs) html += `      ${renderComponent(b)}`; html += `    </ul>\n  </li>\n`; }
+            if (dashboards.length > 0)      { html += `  <li><strong>Dashboard</strong>\n    <ul>\n`; for (const d of dashboards) html += `      ${renderComponent(d)}`; html += `    </ul>\n  </li>\n`; }
+            if (sitemaps.length > 0)        { html += `  <li><strong>Sitemap</strong>\n    <ul>\n`; for (const s of sitemaps) html += `      ${renderComponent(s)}`; html += `    </ul>\n  </li>\n`; }
 
-            // ── 3. Canvas Apps ────────────────────────────────────────────────
-            if (canvasApps.length > 0) {
-                html += `  <li><strong>Canvas App</strong>\n    <ul>\n`;
-                for (const c of canvasApps) html += `      ${renderComponent(c)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 4. Model-Driven Apps ──────────────────────────────────────────
-            if (modelDrivenApps.length > 0) {
-                html += `  <li><strong>Model-Driven App</strong>\n    <ul>\n`;
-                for (const m of modelDrivenApps) html += `      ${renderComponent(m)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 5. Business Process Flows ─────────────────────────────────────
-            if (bpfs.length > 0) {
-                html += `  <li><strong>Business Process Flow</strong>\n    <ul>\n`;
-                for (const b of bpfs) html += `      ${renderComponent(b)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 6. Global Dashboards ──────────────────────────────────────────
-            if (dashboards.length > 0) {
-                html += `  <li><strong>Dashboard</strong>\n    <ul>\n`;
-                for (const d of dashboards) html += `      ${renderComponent(d)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 7. Sitemaps ───────────────────────────────────────────────────
-            if (sitemaps.length > 0) {
-                html += `  <li><strong>Sitemap</strong>\n    <ul>\n`;
-                for (const s of sitemaps) html += `      ${renderComponent(s)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 8. Plugin Assemblies + Steps ──────────────────────────────────
             if (pluginAssemblies.length > 0 || unlinkedSteps.length > 0) {
                 for (const asm of pluginAssemblies) {
                     const key = (asm.name || asm.displayName || "").toLowerCase();
                     const steps = stepsByAssembly.get(key) || [];
                     html += `  <li><strong>Plugin Assembly - ${ESC(label(asm))}</strong>`;
-                    if (asm.componentStatus) {
-                        const color = getStatusColor(asm.componentStatus);
-                        html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(asm.componentStatus)}]</span>`;
-                    }
+                    if (asm.componentStatus) { const color = getStatusColor(asm.componentStatus); html += ` <span style="color: ${color}; font-weight: bold;">- [${ESC(asm.componentStatus)}]</span>`; }
                     if (asm.description) html += `\n    <ul><li>${ESC(asm.description)}</li></ul>`;
-                    if (steps.length) {
-                        html += `\n    <ul>\n`;
-                        for (const s of steps) html += `      ${renderComponent(s, "Plugin Step - ")}`;
-                        html += `    </ul>`;
-                    }
+                    if (steps.length) { html += `\n    <ul>\n`; for (const s of steps) html += `      ${renderComponent(s, "Plugin Step - ")}`; html += `    </ul>`; }
                     html += `\n  </li>\n`;
                 }
-                if (unlinkedSteps.length > 0) {
-                    html += `  <li><strong>Plugin Step</strong>\n    <ul>\n`;
-                    for (const s of unlinkedSteps) html += `      ${renderComponent(s)}`;
-                    html += `    </ul>\n  </li>\n`;
-                }
+                if (unlinkedSteps.length > 0) { html += `  <li><strong>Plugin Step</strong>\n    <ul>\n`; for (const s of unlinkedSteps) html += `      ${renderComponent(s)}`; html += `    </ul>\n  </li>\n`; }
             }
 
-            // ── 9. Security Roles ─────────────────────────────────────────────
-            if (securityRoles.length > 0) {
-                html += `  <li><strong>Security Role</strong>\n    <ul>\n`;
-                for (const s of securityRoles) html += `      ${renderComponent(s)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 10. Web Resources ─────────────────────────────────────────────
-            if (webResources.length > 0) {
-                html += `  <li><strong>Web Resource</strong>\n    <ul>\n`;
-                for (const w of webResources) html += `      ${renderComponent(w)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 11. Custom Controls ───────────────────────────────────────────
-            if (customControls.length > 0) {
-                html += `  <li><strong>Custom Control</strong>\n    <ul>\n`;
-                for (const c of customControls) html += `      ${renderComponent(c)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 12. Environment Variables ─────────────────────────────────────
-            if (envVarDefs.length > 0) {
-                html += `  <li><strong>Environment Variable Definition</strong>\n    <ul>\n`;
-                for (const e of envVarDefs) html += `      ${renderComponent(e)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 13. Connection References ─────────────────────────────────────
-            if (connections.length > 0) {
-                html += `  <li><strong>Connection Reference</strong>\n    <ul>\n`;
-                for (const c of connections) html += `      ${renderComponent(c)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 14. Choices ───────────────────────────────────────────────────
-            if (choices.length > 0) {
-                html += `  <li><strong>Choice - Global</strong>\n    <ul>\n`;
-                for (const c of choices) html += `      ${renderComponent(c)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 15. Email Templates ───────────────────────────────────────────
-            if (emailTemplates.length > 0) {
-                html += `  <li><strong>Email Template</strong>\n    <ul>\n`;
-                for (const e of emailTemplates) html += `      ${renderComponent(e)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 16. Azure Functions ───────────────────────────────────────────
-            if (azureFunctions.length > 0) {
-                html += `  <li><strong>Azure Function</strong>\n    <ul>\n`;
-                for (const a of azureFunctions) html += `      ${renderComponent(a)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 17. Logic Apps ────────────────────────────────────────────────
-            if (logicApps.length > 0) {
-                html += `  <li><strong>Azure Logic App</strong>\n    <ul>\n`;
-                for (const l of logicApps) html += `      ${renderComponent(l)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
-
-            // ── 18. Other Azure Resources ─────────────────────────────────────
-            if (azureResources.length > 0) {
-                html += `  <li><strong>Azure Resource</strong>\n    <ul>\n`;
-                for (const a of azureResources) html += `      ${renderComponent(a)}`;
-                html += `    </ul>\n  </li>\n`;
-            }
+            if (securityRoles.length > 0)  { html += `  <li><strong>Security Role</strong>\n    <ul>\n`; for (const s of securityRoles) html += `      ${renderComponent(s)}`; html += `    </ul>\n  </li>\n`; }
+            if (webResources.length > 0)   { html += `  <li><strong>Web Resource</strong>\n    <ul>\n`; for (const w of webResources) html += `      ${renderComponent(w)}`; html += `    </ul>\n  </li>\n`; }
+            if (customControls.length > 0) { html += `  <li><strong>Custom Control</strong>\n    <ul>\n`; for (const c of customControls) html += `      ${renderComponent(c)}`; html += `    </ul>\n  </li>\n`; }
+            if (envVarDefs.length > 0)     { html += `  <li><strong>Environment Variable Definition</strong>\n    <ul>\n`; for (const e of envVarDefs) html += `      ${renderComponent(e)}`; html += `    </ul>\n  </li>\n`; }
+            if (connections.length > 0)    { html += `  <li><strong>Connection Reference</strong>\n    <ul>\n`; for (const c of connections) html += `      ${renderComponent(c)}`; html += `    </ul>\n  </li>\n`; }
+            if (choices.length > 0)        { html += `  <li><strong>Choice - Global</strong>\n    <ul>\n`; for (const c of choices) html += `      ${renderComponent(c)}`; html += `    </ul>\n  </li>\n`; }
+            if (emailTemplates.length > 0) { html += `  <li><strong>Email Template</strong>\n    <ul>\n`; for (const e of emailTemplates) html += `      ${renderComponent(e)}`; html += `    </ul>\n  </li>\n`; }
+            if (azureFunctions.length > 0) { html += `  <li><strong>Azure Function</strong>\n    <ul>\n`; for (const a of azureFunctions) html += `      ${renderComponent(a)}`; html += `    </ul>\n  </li>\n`; }
+            if (logicApps.length > 0)      { html += `  <li><strong>Azure Logic App</strong>\n    <ul>\n`; for (const l of logicApps) html += `      ${renderComponent(l)}`; html += `    </ul>\n  </li>\n`; }
+            if (azureResources.length > 0) { html += `  <li><strong>Azure Resource</strong>\n    <ul>\n`; for (const a of azureResources) html += `      ${renderComponent(a)}`; html += `    </ul>\n  </li>\n`; }
 
             html += `</ul>\n<p>&nbsp;</p>\n</body>\n</html>`;
             return html;
         }
 
-        // ─────────────────────────────────────────────────────────────────────────
-        // EVENT LISTENERS
-        // ─────────────────────────────────────────────────────────────────────────
-        document.addEventListener("DOMContentLoaded", () => {
-
-            document.getElementById("loadBtn").addEventListener("click", async () => {
-                const file = document.getElementById("fileInput").files?.[0];
-                const statusEl = document.getElementById("loadStatus");
-                if (!file) { statusEl.textContent = "Please select an Excel file."; statusEl.className = 'small text-danger'; return; }
-                if (!window.XLSX) { statusEl.textContent = "SheetJS not loaded."; statusEl.className = 'small text-danger'; return; }
-                statusEl.textContent = "Loading Excel file..."; statusEl.className = 'small loading';
-                try {
-                    const data = await file.arrayBuffer();
-                    const wb = XLSX.read(data, { type: "array" });
-                    const sheetName = wb.SheetNames[0];
-                    const ws = wb.Sheets[sheetName];
-                    if (!ws) throw new Error(`Sheet '${sheetName}' not found.`);
-                    const solutionCellAddr = (document.getElementById("solutionCell").value || "B1").trim();
-                    solutionName = getCell(ws, solutionCellAddr) || "Solution";
-                    componentData = parseRows(ws, "DD/MM/YYYY HH:mm");
-                    statusEl.textContent = `✅ Loaded ${componentData.length} component(s) from '${sheetName}'`;
-                    statusEl.className = 'small text-success';
-                    renderGrid();
-                    setTimeout(() => goToStep(2), 500);
-                } catch (e) {
-                    console.error(e);
-                    statusEl.textContent = `❌ Error: ${e.message}`;
-                    statusEl.className = 'small text-danger';
-                }
-            });
-
-            document.getElementById("backToUploadBtn").addEventListener("click", () => goToStep(1));
-            document.getElementById("proceedToGenerateBtn").addEventListener("click", () => goToStep(3));
-            document.getElementById("backToEditBtn").addEventListener("click", () => { clearPreview(); goToStep(2); });
-
-            document.getElementById("selectAll").addEventListener("change", (e) => {
-                document.querySelectorAll('.row-select').forEach(cb => cb.checked = e.target.checked);
-            });
-
-            document.getElementById("addRowBtn").addEventListener("click", () => {
-                componentData.push({ solutionUniqueName: solutionName, relatedTable: "", componentTypeRaw: "", componentType: "", displayName: "", name: "", lastModifiedBy: "", lastModifiedOn: "", componentStatus: "New", description: "" });
+        // ── Event Listeners ──
+        document.getElementById("loadBtn").addEventListener("click", async () => {
+            const file = document.getElementById("fileInput").files?.[0];
+            const statusEl = document.getElementById("loadStatus");
+            if (!file) { statusEl.textContent = "Please select an Excel file."; statusEl.className = 'small text-danger'; return; }
+            if (!window.XLSX) { statusEl.textContent = "SheetJS not loaded."; statusEl.className = 'small text-danger'; return; }
+            statusEl.textContent = "Loading Excel file..."; statusEl.className = 'small loading';
+            try {
+                const data = await file.arrayBuffer();
+                const wb = XLSX.read(data, { type: "array" });
+                const sheetName = wb.SheetNames[0];
+                const ws = wb.Sheets[sheetName];
+                if (!ws) throw new Error(`Sheet '${sheetName}' not found.`);
+                const solutionCellAddr = (document.getElementById("solutionCell").value || "B1").trim();
+                solutionName = getCell(ws, solutionCellAddr) || "Solution";
+                componentData = parseRows(ws, "DD/MM/YYYY HH:mm");
+                statusEl.textContent = `✅ Loaded ${componentData.length} component(s) from '${sheetName}'`;
+                statusEl.className = 'small text-success';
                 renderGrid();
-            });
-
-            document.getElementById("removeSelectedBtn").addEventListener("click", () => {
-                const selected = Array.from(document.querySelectorAll('.row-select:checked'))
-                    .map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
-                selected.forEach(index => componentData.splice(index, 1));
-                document.getElementById("selectAll").checked = false;
-                renderGrid();
-            });
-
-            document.getElementById("generateBtn").addEventListener("click", () => {
-                const statusEl = document.getElementById("generateStatus");
-                statusEl.textContent = "Generating HTML..."; statusEl.className = 'small loading';
-                try {
-                    const html = buildHTML(componentData, solutionName);
-                    document.getElementById("output").textContent = html;
-                    document.getElementById("preview").innerHTML = html;
-                    statusEl.textContent = `✅ Generated HTML for ${componentData.length} component(s)`;
-                    statusEl.className = 'small text-success';
-                    enableOutputButtons();
-                } catch (e) {
-                    console.error(e);
-                    statusEl.textContent = `❌ Error: ${e.message}`;
-                    statusEl.className = 'small text-danger';
-                }
-            });
-
-            document.getElementById("copyBtn").addEventListener("click", async () => {
-                const statusEl = document.getElementById("generateStatus");
-                const htmlContent = document.getElementById("output").textContent || "";
-                if (!htmlContent) { statusEl.textContent = "⚠️ Please generate HTML first!"; statusEl.className = 'small text-danger'; return; }
-                try {
-                    await navigator.clipboard.writeText(htmlContent);
-                    statusEl.textContent = "✅ HTML copied to clipboard!"; statusEl.className = 'small text-success';
-                } catch (e) {
-                    statusEl.textContent = "❌ Failed to copy to clipboard."; statusEl.className = 'small text-danger';
-                }
-            });
-
-            document.getElementById("downloadBtn").addEventListener("click", () => {
-                const statusEl = document.getElementById("generateStatus");
-                const text = document.getElementById("output").textContent || "";
-                if (!text) { statusEl.textContent = "⚠️ Please generate HTML first!"; statusEl.className = 'small text-danger'; return; }
-                const blob = new Blob([text], { type: "text/html;charset=utf-8" });
-                const a = document.createElement("a");
-                const filename = `${solutionName.replace(/[^a-z0-9]/gi, '_')}_Release.html`;
-                a.href = URL.createObjectURL(blob);
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                URL.revokeObjectURL(a.href);
-                a.remove();
-                statusEl.textContent = `✅ Downloaded: ${filename}`; statusEl.className = 'small text-success';
-            });
+                setTimeout(() => goToStep(2), 500);
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = `❌ Error: ${e.message}`;
+                statusEl.className = 'small text-danger';
+            }
         });
-    </script>
+
+        document.getElementById("backToUploadBtn").addEventListener("click", () => goToStep(1));
+        document.getElementById("proceedToGenerateBtn").addEventListener("click", () => goToStep(3));
+        document.getElementById("backToEditBtn").addEventListener("click", () => { clearPreview(); goToStep(2); });
+
+        document.getElementById("selectAll").addEventListener("change", (e) => {
+            document.querySelectorAll('.row-select').forEach(cb => cb.checked = e.target.checked);
+        });
+
+        document.getElementById("addRowBtn").addEventListener("click", () => {
+            componentData.push({ solutionUniqueName: solutionName, relatedTable: "", componentTypeRaw: "", componentType: "", displayName: "", name: "", lastModifiedBy: "", lastModifiedOn: "", componentStatus: "New", description: "" });
+            renderGrid();
+        });
+
+        document.getElementById("removeSelectedBtn").addEventListener("click", () => {
+            const selected = Array.from(document.querySelectorAll('.row-select:checked'))
+                .map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
+            selected.forEach(index => componentData.splice(index, 1));
+            document.getElementById("selectAll").checked = false;
+            renderGrid();
+        });
+
+        document.getElementById("generateBtn").addEventListener("click", () => {
+            const statusEl = document.getElementById("generateStatus");
+            statusEl.textContent = "Generating HTML..."; statusEl.className = 'small loading';
+            try {
+                const html = buildHTML(componentData, solutionName);
+                document.getElementById("output").textContent = html;
+                document.getElementById("preview").innerHTML = html;
+                statusEl.textContent = `✅ Generated HTML for ${componentData.length} component(s)`;
+                statusEl.className = 'small text-success';
+                enableOutputButtons();
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = `❌ Error: ${e.message}`;
+                statusEl.className = 'small text-danger';
+            }
+        });
+
+        document.getElementById("copyBtn").addEventListener("click", async () => {
+            const statusEl = document.getElementById("generateStatus");
+            const htmlContent = document.getElementById("output").textContent || "";
+            if (!htmlContent) { statusEl.textContent = "⚠️ Please generate HTML first!"; statusEl.className = 'small text-danger'; return; }
+            try {
+                await navigator.clipboard.writeText(htmlContent);
+                statusEl.textContent = "✅ HTML copied to clipboard!"; statusEl.className = 'small text-success';
+            } catch (e) {
+                statusEl.textContent = "❌ Failed to copy to clipboard."; statusEl.className = 'small text-danger';
+            }
+        });
+
+        document.getElementById("downloadBtn").addEventListener("click", () => {
+            const statusEl = document.getElementById("generateStatus");
+            const text = document.getElementById("output").textContent || "";
+            if (!text) { statusEl.textContent = "⚠️ Please generate HTML first!"; statusEl.className = 'small text-danger'; return; }
+            const blob = new Blob([text], { type: "text/html;charset=utf-8" });
+            const a = document.createElement("a");
+            const filename = `${solutionName.replace(/[^a-z0-9]/gi, '_')}_Release.html`;
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(a.href);
+            a.remove();
+            statusEl.textContent = `✅ Downloaded: ${filename}`; statusEl.className = 'small text-success';
+        });
+
+    }); // end DOMContentLoaded
+</script>
 </body>
 </html>
