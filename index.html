@@ -677,31 +677,34 @@
         // Block drag-start (prevents drag-to-URL trick)
         document.addEventListener('dragstart', function(e) { e.preventDefault(); }, true);
 
-        // ── DevTools size-change detection ───────────────────────────────────
-        // When DevTools opens, the window inner dimensions shrink or the
-        // outer/inner difference grows. Poll every 1s.
+        // ── DevTools detection via debugger timing ────────────────────────────
+        // When DevTools is open, the `debugger` statement causes a noticeable
+        // pause (>100ms). In normal use with DevTools closed, it's near-instant.
         const devToolsWarning = document.getElementById('devToolsWarning');
         let devToolsOpen = false;
+        let consecutiveHits = 0; // require multiple hits to avoid false positives
 
         function checkDevTools() {
-            const threshold = 160;
-            const widthDiff  = window.outerWidth  - window.innerWidth;
-            const heightDiff = window.outerHeight - window.innerHeight;
-            const suspected  = widthDiff > threshold || heightDiff > threshold;
+            const start = performance.now();
+            // eslint-disable-next-line no-debugger
+            debugger;
+            const elapsed = performance.now() - start;
 
-            if (suspected && !devToolsOpen) {
-                devToolsOpen = true;
-                devToolsWarning.classList.add('show');
-            } else if (!suspected && devToolsOpen) {
-                devToolsOpen = false;
-                devToolsWarning.classList.remove('show');
+            if (elapsed > 100) {
+                consecutiveHits++;
+                if (consecutiveHits >= 2 && !devToolsOpen) {
+                    devToolsOpen = true;
+                    devToolsWarning.classList.add('show');
+                }
+            } else {
+                consecutiveHits = 0;
+                if (devToolsOpen) {
+                    devToolsOpen = false;
+                    devToolsWarning.classList.remove('show');
+                }
             }
         }
         setInterval(checkDevTools, 1000);
-
-        // Secondary debugger-based detection (pauses execution in DevTools)
-        // Disabled as it can be too aggressive — kept here as a comment reference:
-        // setInterval(function(){ const s=Date.now(); debugger; if(Date.now()-s>100){ /* devtools open */ } }, 500);
     })();
 
     // ══════════════════════════════════════════════════════════════════════════
